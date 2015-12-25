@@ -11,7 +11,7 @@ The expire date is stored as a long value, as given by Java's Date class, theref
 The other info: account no, credit limit, etc. will be stored as long values, each of 64 bits.
 
 The steps to be taken:
-1. Registration:
+#1. Registration:
     A. User sends to Broker: his identity, his public key, his account no and credit limit.
     B. Broker sends to User: the certificate: C(U) = sigB(B, U, KB, KU, E, I), where
         B is the identity of the Broker,
@@ -21,7 +21,7 @@ The steps to be taken:
         E is the expire date of the certificate,
         I are the additional information: account no, credit limit.
 
-2. Payment:
+#2. Payment:
     If the User makes his first payment to the Vendor:
         User generates a hash chain of length n: generates cn, an random secret (number), then c(n-1) = h(cn) and so on until c0 = h(c1)
         User computes a commitment: commit(V) = sigU(V, C(U), c0, D, I), where
@@ -32,5 +32,5 @@ The steps to be taken:
             I are additional info: length of the chain, etc.
         User sends the commit to the Vendor.
     User sends the i-th payment of the day to the Vendor by sending the pair (ci, i).
-3. Redeem:
+#3. Redeem:
     Considering (cl, l) the last payment pair, the Vendor send to the Broker a message containing: commit(U), cl, l.
