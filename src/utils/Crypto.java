@@ -13,7 +13,7 @@ public class Crypto {
 
         try {
             keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(1024);
+            keyPairGenerator.initialize(Constants.KEY_NO_OF_BITS);
 
             keyPair = keyPairGenerator.genKeyPair();
         } catch (NoSuchAlgorithmException e) {
