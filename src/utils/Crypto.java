@@ -1,5 +1,6 @@
 package utils;
 
+import java.io.UnsupportedEncodingException;
 import java.security.*;
 
 /**
@@ -21,6 +22,18 @@ public class Crypto {
         }
 
         return keyPair;
+    }
+
+    public static byte[] hashMessage(byte[] message) {
+        byte[] hash = null;
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+            hash = messageDigest.digest(message);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return hash;
     }
 
 }

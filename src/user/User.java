@@ -90,9 +90,15 @@ public class User {
         boolean sendResult = broker.registerNewUser(personalInfo);
 
         //wait to get the certificate
-        byte[] certificate = broker.getUserCertificate();
+        byte[] certificate = broker.getUserCertificate(identity);
+        System.out.println("User.registerToBroker: certificate length=" + certificate.length);
+        String print = "";
+        for (int i = 0; i < certificate.length; ++i) {
+            print += certificate[i];
+        }
+        System.out.println("User.registerToBroker: certificate=" + print);
 
-        return false;
+        return sendResult;
     }
 
     /**
@@ -124,6 +130,11 @@ public class User {
         for (int i = 0; i < identity.length; ++i, ++index) {
             personalInfo[index] = identity[i];
         }
+        String print = "";
+        for (int i = 0; i < identity.length; ++i) {
+            print += identity[i];
+        }
+        System.out.println("User.getPersonalInfo: identity=" + print);
 
         byte[] publicKeyEncoded = publicKey.getEncoded();
 
@@ -140,6 +151,11 @@ public class User {
         for (int i = 0; i < publicKeyEncoded.length; ++i, ++index) {
             personalInfo[index] = publicKeyEncoded[i];
         }
+        print = "";
+        for (int i = 0; i < publicKeyEncoded.length; ++i) {
+            print += publicKeyEncoded[i];
+        }
+        System.out.println("User.getPersonalInfo: userPublicKey=" + print);
 
         System.out.println("User.getPersonalInfo: accountNumber=" + getAccount().getAccountNumber());
         //copy account number

@@ -12,7 +12,7 @@ public class Main {
         User user1 = new User("user1@gmail.com");
         Vendor vendor1 = new Vendor("vendor1@gmail.com");
 
-        user1.registerToBroker(1000);
+        System.out.println(user1.registerToBroker(1000));
     }
 
 }
