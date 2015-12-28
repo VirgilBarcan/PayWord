@@ -1,13 +1,17 @@
 package vendor;
 
-import user.User;
+import user.UserInfo;
+import utils.Commit;
 import utils.Constants;
 import utils.Crypto;
+import utils.Payment;
 
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,7 +23,8 @@ public class Vendor {
     private PublicKey publicKey;
     private byte[] identity;
 
-    private Map<User, String> userCommitments;
+    private Map<UserInfo, Commit> userCommitments;
+    private Map<UserInfo, List<Payment>> userPayments;
 
     public Vendor() {
         KeyPair keyPair = Crypto.getRSAKeyPair();
@@ -28,6 +33,7 @@ public class Vendor {
         initIdentity();
 
         this.userCommitments = new HashMap<>();
+        this.userPayments = new HashMap<>();
     }
 
     public Vendor(String identity) {
@@ -43,6 +49,7 @@ public class Vendor {
         }
 
         this.userCommitments = new HashMap<>();
+        this.userPayments = new HashMap<>();
     }
 
     private void initIdentity() {
@@ -52,12 +59,50 @@ public class Vendor {
         }
     }
 
+    public byte[] getIdentity() {
+        return this.identity;
+    }
+
     public PublicKey getPublicKey() {
         return this.publicKey;
     }
 
     private PrivateKey getPrivateKey() {
         return this.privateKey;
+    }
+
+    /**
+     * Add a new commit from a user
+     * @param commit
+     * @return
+     */
+    public boolean addNewCommit(Commit commit) {
+        //TODO: extract userInfo from the commit, if possible
+        UserInfo userInfo = new UserInfo();
+        userInfo.setIdentity(new byte[1024]);
+
+        userCommitments.put(userInfo, commit);
+
+        //TODO: check U's signature on commit
+
+
+        //TODO: check B's signature on C(U)
+
+        return true;
+    }
+
+    public boolean addNewPayment(Payment payment) {
+        //TODO: extract userInfo from the commit, if possible
+        UserInfo userInfo = new UserInfo();
+        userInfo.setIdentity(new byte[1024]);
+
+        List<Payment> listOfPayments = new ArrayList<>();
+        listOfPayments.add(payment);
+        userPayments.put(userInfo, listOfPayments);
+
+        System.out.println("Vendor.addNewPayment: paymentNo=" + payment.getPaywordNo());
+
+        return true;
     }
 
 }

@@ -231,22 +231,19 @@ public class Broker {
         LocalDateTime currentDateLocalDateTime = LocalDateTime.now();
         LocalDateTime expireDateLocalDate = currentDateLocalDateTime.plusMonths(1);
         long expireDateLong = expireDateLocalDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        byte[] expireDateBytes = new byte[8];
-        expireDateBytes = ByteBuffer.allocate(8).putLong(expireDateLong).array();
+        byte[] expireDateBytes =  ByteBuffer.allocate(8).putLong(expireDateLong).array();
         for (int i = 0; i < expireDateBytes.length; ++i, ++index) {
             message[index] = expireDateBytes[i];
         }
 
         //copy the accountNumber
-        byte[] accountNumberBytes = new byte[8];
-        accountNumberBytes = ByteBuffer.allocate(8).putLong(userInfo.getAccountNumber()).array();
+        byte[] accountNumberBytes = ByteBuffer.allocate(8).putLong(userInfo.getAccountNumber()).array();
         for (int i = 0; i < accountNumberBytes.length; ++i, ++index) {
             message[index] = accountNumberBytes[i];
         }
 
         //copy the creditLimit
-        byte[] creditLimitBytes = new byte[8];
-        creditLimitBytes = ByteBuffer.allocate(8).putLong(userInfo.getCreditLimit()).array();
+        byte[] creditLimitBytes = ByteBuffer.allocate(8).putLong(userInfo.getCreditLimit()).array();
         for (int i = 0; i < creditLimitBytes.length; ++i, ++index) {
             message[index] = creditLimitBytes[i];
         }
@@ -258,6 +255,7 @@ public class Broker {
         }
         System.out.println("Broker.getUserCertificate: message=" + print);
 
+        //hash and sign
         size += 20; //the length of the hash of, SHA-1 gives 160 bits of output
         byte[] certificate = new byte[size];
         index = 0;
@@ -267,6 +265,9 @@ public class Broker {
 
         //copy the hash of the message that is build so far
         byte[] hash = Crypto.hashMessage(message);
+
+        //TODO: Sign the hash
+
         for (int i = 0; i < hash.length; ++i, ++index) {
             certificate[index] = hash[i];
         }

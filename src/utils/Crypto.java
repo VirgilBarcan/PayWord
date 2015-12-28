@@ -1,7 +1,7 @@
 package utils;
 
-import java.io.UnsupportedEncodingException;
 import java.security.*;
+import java.util.Random;
 
 /**
  * Created by virgil on 26.12.2015.
@@ -36,4 +36,12 @@ public class Crypto {
         return hash;
     }
 
+    public static byte[] getSecret(int noOfBytes) {
+        byte[] secret = new byte[noOfBytes];
+
+        Random random = new Random();
+        random.nextBytes(secret);
+
+        return secret;
+    }
 }

@@ -1,8 +1,7 @@
 package user;
 
 import broker.Broker;
-import utils.Constants;
-import utils.Crypto;
+import utils.*;
 import vendor.Vendor;
 
 import java.nio.ByteBuffer;
@@ -10,10 +9,9 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
 
 /**
  * Created by virgil on 25.12.2015.
@@ -27,8 +25,11 @@ public class User {
     private byte[] identity;
     private Account account;
 
-    private Map<Vendor, Date> paymentsDone;
-    private Map<Vendor, List<String>> hashChains;
+    private byte[] userCertificate;
+
+    private int hashChainLength;
+    private Map<Vendor, List<Payment>> paymentsDone;
+    private Map<Vendor, List<List<Payword>>> hashChains;
 
     public User() {
         broker = Broker.getInstance();
@@ -38,6 +39,7 @@ public class User {
         initIdentity();
         this.account = new Account();
 
+        this.hashChainLength = 10000;
         this.paymentsDone = new HashMap<>();
         this.hashChains = new HashMap<>();
     }
@@ -56,6 +58,7 @@ public class User {
         }
         this.account = new Account();
 
+        this.hashChainLength = 10000;
         this.paymentsDone = new HashMap<>();
         this.hashChains = new HashMap<>();
     }
@@ -65,6 +68,10 @@ public class User {
         for (int i = 0; i < Constants.IDENTITY_NO_OF_BITS / 8; ++i) {
             this.identity[i] = 0;
         }
+    }
+
+    public byte[] getIdentity() {
+        return this.identity;
     }
 
     public PublicKey getPublicKey() {
@@ -83,6 +90,13 @@ public class User {
         return this.account;
     }
 
+    /**
+     * This is the first step in the scheme, the registration of the User to the Broker
+     * The User sends his personal info to the Broker
+     * The Broker sends the certificate
+     * @param creditLimit the credit limit that the user wants to be imposed
+     * @return true if the action completed with success, false otherwise
+     */
     public boolean registerToBroker(long creditLimit) {
         byte[] personalInfo = getPersonalInfo(creditLimit);
 
@@ -90,11 +104,11 @@ public class User {
         boolean sendResult = broker.registerNewUser(personalInfo);
 
         //wait to get the certificate
-        byte[] certificate = broker.getUserCertificate(identity);
-        System.out.println("User.registerToBroker: certificate length=" + certificate.length);
+        this.userCertificate = broker.getUserCertificate(identity);
+        System.out.println("User.registerToBroker: certificate length=" + userCertificate.length);
         String print = "";
-        for (int i = 0; i < certificate.length; ++i) {
-            print += certificate[i];
+        for (int i = 0; i < userCertificate.length; ++i) {
+            print += userCertificate[i];
         }
         System.out.println("User.registerToBroker: certificate=" + print);
 
@@ -172,5 +186,200 @@ public class User {
         }
 
         return personalInfo;
+    }
+
+    /**
+     * This is the second step in the scheme
+     *
+     * @param vendor the Vendor that the User wants to pay
+     * @return true if the action completed with success, false otherwise
+     */
+    public boolean payVendor(Vendor vendor) {
+        int paymentNo;
+        if (isFirstPayment(vendor)) {
+            paymentNo = 0;
+
+            //generate the new hash chain for this vendor
+            generateNewHashChain(vendor);
+
+            //compute the commit(V)
+            Commit commit = computeCommitment(vendor);
+
+            //send the commit to the vendor
+            sendCommit(vendor, commit);
+        }
+        else {
+            paymentNo = paymentsDone.get(vendor).size();
+        }
+
+        //send the payment to the vendor
+        makePayment(vendor, paymentNo);
+
+        return false;
+    }
+
+    /**
+     * Check if this Vendor was already payed this day
+     * @param vendor the Vendor
+     * @return true if this is the first payment to the Vendor, false otherwise
+     */
+    private boolean isFirstPayment(Vendor vendor) {
+        return !paymentsDone.containsKey(vendor);
+    }
+
+    /**
+     * Generate a new hash chain for the Vendor, in order to make it possible to pay him
+     * @param vendor the Vendor
+     */
+    private void generateNewHashChain(Vendor vendor) {
+        System.out.println("Started generating hash chain");
+        List<Payword> currentHashChain = new ArrayList<>();
+
+        byte[] cn = Crypto.getSecret(1024);
+
+        Payword last = new Payword(cn); //c(n-1)
+        currentHashChain.add(last);
+        for (int i = this.hashChainLength - 2; i >= 0; --i) {
+            Payword current = new Payword(last);
+            currentHashChain.add(current);
+
+            last = current;
+        }
+
+        System.out.println("Finished generating hash chain");
+
+        if (hashChains.get(vendor) != null) {
+            List<List<Payword>> vendorPreviousHashChains = hashChains.get(vendor);
+            vendorPreviousHashChains.add(currentHashChain);
+            hashChains.remove(vendor);
+            hashChains.put(vendor, vendorPreviousHashChains);
+        }
+        else {
+            List<List<Payword>> vendorPreviousHashChains = new ArrayList<>();
+            vendorPreviousHashChains.add(currentHashChain);
+            hashChains.put(vendor, vendorPreviousHashChains);
+        }
+
+    }
+
+    /**
+     * Generate a commit for the Vendor
+     * commit(V) = sigU(V, C(U), c0, D, I), where
+     *  V is the identity of the Vendor,
+     *  C(U) is the certificate of the User, generated by the Broker,
+     *  c0 is the root of the hash chain,
+     *  D is the current date,
+     *  I are additional info: length of the chain, etc.
+     * @param vendor the Vendor
+     * @return the commit
+     */
+    private Commit computeCommitment(Vendor vendor) {
+        int size = vendor.getIdentity().length + userCertificate.length + 20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
+        byte[] message = new byte[size];
+
+        int index = 0;
+
+        //copy vendor's identity
+        byte[] vendorIdentity = vendor.getIdentity();
+        for (int i = 0; i < vendorIdentity.length; ++i, ++index) {
+            message[index] = vendorIdentity[i];
+        }
+
+        //copy user certificate
+        for (int i = 0; i < this.userCertificate.length; ++i, ++index) {
+            message[index] = this.userCertificate[i];
+        }
+
+        //copy the root of the hash chain, c0
+        List<List<Payword>> allHashChains = hashChains.get(vendor);
+        List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
+        byte[] c0 = lastHashChainComputed.get(this.hashChainLength - 1).getBytes();
+        for (int i = 0; i < c0.length; ++i, ++index) {
+            message[index] = c0[i];
+        }
+
+        //copy the current date
+        LocalDateTime currentDateLocalDateTime = LocalDateTime.now();
+        long currentDateLong = currentDateLocalDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        byte[] currentDateBytes = ByteBuffer.allocate(8).putLong(currentDateLong).array();
+        for (int i = 0; i < currentDateBytes.length; ++i, ++index) {
+            message[index] = currentDateBytes[i];
+        }
+
+        //copy the length of the chain
+        byte[] lengthOfChainBytes = ByteBuffer.allocate(4).putInt(this.hashChainLength).array();
+        for (int i = 0; i < lengthOfChainBytes.length; ++i, ++index) {
+            message[index] = lengthOfChainBytes[i];
+        }
+
+        //hash and sign
+        size += 20; //the length of the hash of, SHA-1 gives 160 bits of output
+        byte[] commitBytes = new byte[size];
+        index = 0;
+        for (int i = 0; i < message.length; ++i, ++index) {
+            commitBytes[index] = message[i];
+        }
+
+        //copy the hash of the message that is build so far
+        byte[] hash = Crypto.hashMessage(message);
+
+        //TODO: Sign the hash
+
+        for (int i = 0; i < hash.length; ++i, ++index) {
+            commitBytes[index] = hash[i];
+        }
+
+        Commit commit = new Commit(message);
+
+        return commit;
+    }
+
+    /**
+     * Send the commit to the Vendor
+     * @param vendor the Vendor
+     * @param commit the commit
+     */
+    private void sendCommit(Vendor vendor, Commit commit) {
+        vendor.addNewCommit(commit);
+    }
+
+    /**
+     * Make a new payment to the vendor
+     * @param vendor the Vendor
+     * @param paymentNo the index of the payment
+     */
+    private void makePayment(Vendor vendor, int paymentNo) {
+        byte[] bytes = new byte[24];
+
+        System.out.println("User.makePayment: paymentNo=" + paymentNo);
+
+        int index = 0;
+
+        //copy the paymentNo-th payword
+        List<List<Payword>> allHashChains = hashChains.get(vendor);
+        List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
+        byte[] ci = lastHashChainComputed.get(this.hashChainLength - paymentNo - 1).getBytes();
+        for (int i = 0; i < ci.length; ++i, ++index) {
+            bytes[index] = ci[i];
+        }
+
+        //copy the bytes of paymentNo
+        byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
+        for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
+            bytes[index] = paymentNoBytes[i];
+        }
+
+        Payment payment = new Payment(bytes);
+        vendor.addNewPayment(payment);
+
+        List<Payment> paymentList;
+        if (paymentsDone.get(vendor) != null)
+            paymentList = paymentsDone.get(vendor);
+        else
+            paymentList = new ArrayList<>();
+
+        paymentList.add(payment);
+        paymentsDone.remove(vendor);
+        paymentsDone.put(vendor, paymentList);
     }
 }
