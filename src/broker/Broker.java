@@ -288,4 +288,16 @@ public class Broker {
                 return userInfo;
         return null;
     }
+
+    public boolean redeem(byte[] message) {
+        //check commit(U)
+
+        //check last payment (apply hash function l times)
+
+        //check if payment is authentic and not already redeemed
+
+        //make payment to Vendor and take money from User
+
+        return true;
+    }
 }

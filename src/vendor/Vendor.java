@@ -1,11 +1,13 @@
 package vendor;
 
+import broker.Broker;
 import user.UserInfo;
 import utils.Commit;
 import utils.Constants;
 import utils.Crypto;
 import utils.Payment;
 
+import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -105,4 +107,41 @@ public class Vendor {
         return true;
     }
 
+    /**
+     * This is the third step in the scheme
+     * The Vendor has to send to the Broker a message containing: commit(U), c(l), l, where l is the last index of a payment
+     * @return true if the action completed with success, false otherwise
+     */
+    public boolean redeem() {
+        //TODO: fix this
+        UserInfo userInfo = new UserInfo();
+        userInfo.setIdentity(new byte[1024]);
+
+        List<Payment> paymentList = userPayments.get(userInfo);
+        int size = userCommitments.get(userInfo).getBytes().length + paymentList.get(paymentList.size() - 1).getBytes().length + Constants.INT_NO_OF_BYTES;
+        byte[] message = new byte[24];
+
+        int index = 0;
+
+        //copy the commit
+        byte[] commitBytes = userCommitments.get(userInfo).getBytes();
+        for (int i = 0; i < commitBytes.length; ++i, ++index)
+            message[index] = commitBytes[i];
+
+        //copy the last payword received
+        byte[] lastPaywordBytes = paymentList.get(paymentList.size() - 1).getBytes();
+        for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
+            message[index] = lastPaywordBytes[i];
+
+        //copy the index of the last payword received
+        byte[] lastPaywordIndexBytes = ByteBuffer.allocate(4).putInt(paymentList.size()).array();
+        for (int i = 0; i < lastPaywordIndexBytes.length; ++i, ++index)
+            message[index] = lastPaywordIndexBytes[i];
+
+        //send message to the Broker to redeem the payments
+        Broker broker = Broker.getInstance();
+        broker.redeem(message);
+
+        return true;
+    }
 }
