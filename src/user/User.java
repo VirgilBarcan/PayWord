@@ -102,13 +102,38 @@ public class User {
         boolean sendResult = broker.registerNewUser(personalInfo);
 
         //wait to get the certificate
-        this.userCertificate = broker.getUserCertificate(identity);
+        byte[] userCertificate = broker.getUserCertificate(identity);
         System.out.println("User.registerToBroker: certificate length=" + userCertificate.length);
         String print = "";
         for (int i = 0; i < userCertificate.length; ++i) {
             print += userCertificate[i];
         }
         System.out.println("User.registerToBroker: certificate=" + print);
+
+        //check Broker signature on the certificate
+        //get the unsigned part
+        int size = 604; //the no of bytes of the message without the signed hash
+        byte[] message = Arrays.copyOfRange(userCertificate, 0, size);
+
+        //get the signed hash
+        byte[] signedHash = Arrays.copyOfRange(userCertificate, size, userCertificate.length);
+
+        Signature signature = null;
+        try {
+            signature = Signature.getInstance("SHA1WithRSA");
+            signature.initVerify(broker.getPublicKey());
+            signature.update(message);
+            boolean result = signature.verify(signedHash);
+            System.out.println("User.registerToBroker: verify Broker signature on the certificate result: " + result);
+            if (result)
+                this.userCertificate = userCertificate;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
 
         return sendResult;
     }

@@ -311,6 +311,7 @@ public class Broker {
     public boolean redeem(Vendor vendor, byte[] message) {
         //TODO: check commit(U)
 
+
         //TODO: check last payment (apply hash function l times)
 
         //TODO: check if payment is authentic and not already redeemed

@@ -100,12 +100,6 @@ public class Vendor {
      * @return
      */
     public boolean addNewCommit(User user, Commit commit) {
-        //TODO: extract userInfo from the commit, if possible
-        UserInfo userInfo = new UserInfo();
-        userInfo.setIdentity(user.getIdentity());
-
-        userCommitments.put(userInfo, commit);
-
         //check U's signature on commit
         //get the unsigned part
         int size = 892; //the no of bytes of the message without the signed hash
@@ -115,11 +109,13 @@ public class Vendor {
         byte[] signedHash = Arrays.copyOfRange(commit.getBytes(), size, commit.getBytes().length);
 
         Signature signature = null;
+        boolean result = false;
         try {
             signature = Signature.getInstance("SHA1WithRSA");
             signature.initVerify(user.getPublicKey());
             signature.update(message);
-            System.out.println("Vendor.addNewCommit: verify signature result: " + signature.verify(signedHash));
+            result = signature.verify(signedHash);
+            System.out.println("Vendor.addNewCommit: verify User signature on commit result: " + result);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (SignatureException e) {
@@ -128,9 +124,41 @@ public class Vendor {
             e.printStackTrace();
         }
 
-        //TODO: check B's signature on C(U)
+        if (result) {
+            //check B's signature on C(U)
+            //extract C(U) from the commit
+            byte[] userCertificate = Arrays.copyOfRange(commit.getBytes(), this.identity.length, this.identity.length + 732);
+            //get the signed hash
+            signedHash = Arrays.copyOfRange(userCertificate, 604, userCertificate.length);
 
-        return true;
+            //check the Broker signature on the user certificate
+            signature = null;
+            try {
+                Broker broker = Broker.getInstance();
+                signature = Signature.getInstance("SHA1WithRSA");
+                signature.initVerify(broker.getPublicKey());
+                signature.update(message);
+                result = signature.verify(signedHash);
+                System.out.println("Vendor.addNewCommit: verify Broker signature on User certificate result: " + result);
+                if (result) {
+                    //TODO: extract userInfo from the commit, if possible
+                    UserInfo userInfo = new UserInfo();
+                    userInfo.setIdentity(user.getIdentity());
+
+                    userCommitments.put(userInfo, commit);
+                }
+
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (SignatureException e) {
+                e.printStackTrace();
+            } catch (InvalidKeyException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        return result;
     }
 
     public boolean addNewPayment(User user, Payment payment) {
