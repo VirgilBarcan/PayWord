@@ -108,7 +108,7 @@ public class Vendor {
 
         //check U's signature on commit
         //get the unsigned part
-        int size = 784; //the no of bytes of the message without the signed hash
+        int size = 892; //the no of bytes of the message without the signed hash
         byte[] message = Arrays.copyOfRange(commit.getBytes(), 0, size);
 
         //get the signed hash

@@ -261,21 +261,34 @@ public class Broker {
         }
         System.out.println("Broker.getUserCertificate: message=" + print);
 
+
         //hash and sign
-        size += 20; //the length of the hash of, SHA-1 gives 160 bits of output
+        byte[] signedHash = null;
+
+        //sign the message
+        Signature sig = null;
+        try {
+            sig = Signature.getInstance("SHA1WithRSA");
+            sig.initSign(getPrivateKey());
+            sig.update(message);
+            signedHash = sig.sign();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        }
+
+        size += signedHash.length; //the length of the signed hash
         byte[] certificate = new byte[size];
         index = 0;
         for (int i = 0; i < message.length; ++i, ++index) {
             certificate[index] = message[i];
         }
 
-        //copy the hash of the message that is build so far
-        byte[] hash = Crypto.hashMessage(message);
-
-        //TODO: Sign the hash
-
-        for (int i = 0; i < hash.length; ++i, ++index) {
-            certificate[index] = hash[i];
+        for (int i = 0; i < signedHash.length; ++i, ++index) {
+            certificate[index] = signedHash[i];
         }
 
         System.out.println("Broker.getUserCertificate: certificate length=" + certificate.length);
