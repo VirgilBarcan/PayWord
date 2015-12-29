@@ -107,11 +107,6 @@ public class Broker {
         //get userIdentity
         byte[] userIdentity = new byte[lengthOfIdentity];
         userIdentity = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
-        String print = "";
-        for (int i = 0; i < userIdentity.length; ++i) {
-            print += userIdentity[i];
-        }
-        System.out.println("Broker.registerNewUser: userIdentity=" + print);
 
         indexStart = indexEnd;
         indexEnd += 4;
@@ -143,11 +138,6 @@ public class Broker {
         } catch (InvalidKeySpecException e) {
             e.printStackTrace();
         }
-        print = "";
-        for (int i = 0; i < publicKeyBytes.length; ++i) {
-            print += publicKeyBytes[i];
-        }
-        System.out.println("Broker.registerNewUser: publicKeyBytes=" + print);
 
         indexStart = indexEnd;
         indexEnd += 8;
@@ -205,21 +195,11 @@ public class Broker {
         for (int i = 0; i < this.identity.length; ++i, ++index) {
             message[index] = this.identity[i];
         }
-        String print = "";
-        for (int i = 0; i < this.identity.length; ++i) {
-            print += this.identity[i];
-        }
-        System.out.println("Broker.registerNewUser: identity=" + print);
 
         //copy the identity of the User
         for (int i = 0; i < userIdentity.length; ++i, ++index) {
             message[index] = userIdentity[i];
         }
-        print = "";
-        for (int i = 0; i < userIdentity.length; ++i) {
-            print += userIdentity[i];
-        }
-        System.out.println("Broker.registerNewUser: userIdentity=" + print);
 
         //copy the publicKey of the Broker
         byte[] publicKeyEncoded = publicKey.getEncoded();
@@ -255,12 +235,6 @@ public class Broker {
         }
 
         System.out.println("Broker.getUserCertificate: message length=" + message.length);
-        print = "";
-        for (int i = 0; i < size; ++i) {
-            print += message[i];
-        }
-        System.out.println("Broker.getUserCertificate: message=" + print);
-
 
         //hash and sign
         byte[] signedHash = null;
@@ -292,11 +266,6 @@ public class Broker {
         }
 
         System.out.println("Broker.getUserCertificate: certificate length=" + certificate.length);
-        print = "";
-        for (int i = 0; i < size; ++i) {
-            print += certificate[i];
-        }
-        System.out.println("Broker.getUserCertificate: certificate=" + print);
 
         return certificate;
     }
@@ -323,6 +292,7 @@ public class Broker {
         byte[] userIdentity = Arrays.copyOfRange(userCertificate, 128, 256);
         UserInfo userInfo = getUserWithIdentity(userIdentity);
 
+        //check User signature on commit(U)
         Signature signature = null;
         boolean result = false;
         try {
@@ -339,22 +309,17 @@ public class Broker {
             e.printStackTrace();
         }
 
-        //check User signature on commit(U)
-
         //TODO: check last payment (apply hash function l times)
 
         //TODO: check if payment is authentic and not already redeemed
 
 
-        //get User identity from the certificate inside the commit
-
-
-        //TODO: make payment to Vendor and take money from User
+        //make payment to Vendor and take money from User
         int lastPaymentIndex = ByteBuffer.wrap(message, message.length - 4, 4).getInt();
         System.out.println("Broker.redeem: lastPaymentIndex=" + lastPaymentIndex);
 
         //Proof of Concept
-        bank.takeMoneyFromAccount(1, lastPaymentIndex);
+        bank.takeMoneyFromAccount(userInfo.getAccountNumber(), lastPaymentIndex);
         bank.addMoneyToAccount(vendor.getAccount().getAccountNumber(), lastPaymentIndex);
 
         return true;

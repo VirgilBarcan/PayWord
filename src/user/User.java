@@ -104,11 +104,6 @@ public class User {
         //wait to get the certificate
         byte[] userCertificate = broker.getUserCertificate(identity);
         System.out.println("User.registerToBroker: certificate length=" + userCertificate.length);
-        String print = "";
-        for (int i = 0; i < userCertificate.length; ++i) {
-            print += userCertificate[i];
-        }
-        System.out.println("User.registerToBroker: certificate=" + print);
 
         //check Broker signature on the certificate
         //get the unsigned part
@@ -167,11 +162,6 @@ public class User {
         for (int i = 0; i < identity.length; ++i, ++index) {
             personalInfo[index] = identity[i];
         }
-        String print = "";
-        for (int i = 0; i < identity.length; ++i) {
-            print += identity[i];
-        }
-        System.out.println("User.getPersonalInfo: identity=" + print);
 
         byte[] publicKeyEncoded = publicKey.getEncoded();
 
@@ -188,11 +178,6 @@ public class User {
         for (int i = 0; i < publicKeyEncoded.length; ++i, ++index) {
             personalInfo[index] = publicKeyEncoded[i];
         }
-        print = "";
-        for (int i = 0; i < publicKeyEncoded.length; ++i) {
-            print += publicKeyEncoded[i];
-        }
-        System.out.println("User.getPersonalInfo: userPublicKey=" + print);
 
         System.out.println("User.getPersonalInfo: accountNumber=" + getAccount().getAccountNumber());
         //copy account number
