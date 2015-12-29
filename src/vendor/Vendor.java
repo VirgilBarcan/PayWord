@@ -10,9 +10,7 @@ import utils.Crypto;
 import utils.Payment;
 
 import java.nio.ByteBuffer;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.util.*;
 
 /**
@@ -108,8 +106,27 @@ public class Vendor {
 
         userCommitments.put(userInfo, commit);
 
-        //TODO: check U's signature on commit
+        //check U's signature on commit
+        //get the unsigned part
+        int size = 784; //the no of bytes of the message without the signed hash
+        byte[] message = Arrays.copyOfRange(commit.getBytes(), 0, size);
 
+        //get the signed hash
+        byte[] signedHash = Arrays.copyOfRange(commit.getBytes(), size, commit.getBytes().length);
+
+        Signature signature = null;
+        try {
+            signature = Signature.getInstance("SHA1WithRSA");
+            signature.initVerify(user.getPublicKey());
+            signature.update(message);
+            System.out.println("Vendor.addNewCommit: verify signature result: " + signature.verify(signedHash));
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
 
         //TODO: check B's signature on C(U)
 

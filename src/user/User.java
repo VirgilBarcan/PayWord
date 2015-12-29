@@ -5,9 +5,7 @@ import utils.*;
 import vendor.Vendor;
 
 import java.nio.ByteBuffer;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -277,6 +275,8 @@ public class User {
         int size = vendor.getIdentity().length + userCertificate.length + 20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
         byte[] message = new byte[size];
 
+        System.out.println("User.computeCommitment: size = " + size);
+
         int index = 0;
 
         //copy vendor's identity
@@ -290,7 +290,7 @@ public class User {
             message[index] = this.userCertificate[i];
         }
 
-        //copy the root of the hash chain, c0
+        //copy the root of the signedHash chain, c0
         List<List<Payword>> allHashChains = hashChains.get(vendor);
         List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
         byte[] c0 = lastHashChainComputed.get(this.hashChainLength - 1).getBytes();
@@ -313,23 +313,35 @@ public class User {
         }
 
         //hash and sign
-        size += 20; //the length of the hash of, SHA-1 gives 160 bits of output
+        byte[] signedHash = null;
+
+        //sign the message
+        Signature sig = null;
+        try {
+            sig = Signature.getInstance("SHA1WithRSA");
+            sig.initSign(getPrivateKey());
+            sig.update(message);
+            signedHash = sig.sign();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        }
+
+        size += signedHash.length; //the length of the signed hash
         byte[] commitBytes = new byte[size];
         index = 0;
         for (int i = 0; i < message.length; ++i, ++index) {
             commitBytes[index] = message[i];
         }
 
-        //copy the hash of the message that is build so far
-        byte[] hash = Crypto.hashMessage(message);
-
-        //TODO: Sign the hash
-
-        for (int i = 0; i < hash.length; ++i, ++index) {
-            commitBytes[index] = hash[i];
+        for (int i = 0; i < signedHash.length; ++i, ++index) {
+            commitBytes[index] = signedHash[i];
         }
 
-        Commit commit = new Commit(message);
+        Commit commit = new Commit(commitBytes);
 
         return commit;
     }

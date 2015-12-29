@@ -296,17 +296,17 @@ public class Broker {
     }
 
     public boolean redeem(Vendor vendor, byte[] message) {
-        //check commit(U)
+        //TODO: check commit(U)
 
-        //check last payment (apply hash function l times)
+        //TODO: check last payment (apply hash function l times)
 
-        //check if payment is authentic and not already redeemed
+        //TODO: check if payment is authentic and not already redeemed
 
 
         //get User identity from the certificate inside the commit
 
 
-        //make payment to Vendor and take money from User
+        //TODO: make payment to Vendor and take money from User
         int lastPaymentIndex = ByteBuffer.wrap(message, message.length - 4, 4).getInt();
         System.out.println("Broker.redeem: lastPaymentIndex=" + lastPaymentIndex);
 

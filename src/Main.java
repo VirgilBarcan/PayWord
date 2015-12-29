@@ -36,6 +36,7 @@ public class Main {
         for (int i = 0; i < 10; ++i) {
             user1.payVendor(vendor1);
         }
+        user2.payVendor(vendor1);
         vendor1.redeem();
 
         System.out.println("User1 account balance=" + bank.getAccountBalance(user1.getAccount().getAccountNumber()));
