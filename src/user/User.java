@@ -86,7 +86,7 @@ public class User {
         this.account = account;
     }
 
-    private Account getAccount() {
+    public Account getAccount() {
         return this.account;
     }
 
@@ -340,7 +340,7 @@ public class User {
      * @param commit the commit
      */
     private void sendCommit(Vendor vendor, Commit commit) {
-        vendor.addNewCommit(commit);
+        vendor.addNewCommit(this, commit);
     }
 
     /**
@@ -370,7 +370,7 @@ public class User {
         }
 
         Payment payment = new Payment(bytes);
-        vendor.addNewPayment(payment);
+        vendor.addNewPayment(this, payment);
 
         List<Payment> paymentList;
         if (paymentsDone.get(vendor) != null)

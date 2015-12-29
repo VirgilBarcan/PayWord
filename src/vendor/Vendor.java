@@ -1,6 +1,8 @@
 package vendor;
 
 import broker.Broker;
+import user.Account;
+import user.User;
 import user.UserInfo;
 import utils.Commit;
 import utils.Constants;
@@ -11,10 +13,7 @@ import java.nio.ByteBuffer;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by virgil on 25.12.2015.
@@ -24,18 +23,24 @@ public class Vendor {
     private PrivateKey privateKey;
     private PublicKey publicKey;
     private byte[] identity;
+    private Account account;
 
     private Map<UserInfo, Commit> userCommitments;
     private Map<UserInfo, List<Payment>> userPayments;
+
+    private List<UserInfo> allUsers;
 
     public Vendor() {
         KeyPair keyPair = Crypto.getRSAKeyPair();
         this.privateKey = keyPair.getPrivate();
         this.publicKey = keyPair.getPublic();
         initIdentity();
+        this.account = new Account();
 
         this.userCommitments = new HashMap<>();
         this.userPayments = new HashMap<>();
+
+        this.allUsers = new ArrayList<>();
     }
 
     public Vendor(String identity) {
@@ -49,9 +54,12 @@ public class Vendor {
         for (int i = 0; i < stringIdentityBytes.length; ++i) {
             this.identity[i] = stringIdentityBytes[i];
         }
+        this.account = new Account();
 
         this.userCommitments = new HashMap<>();
         this.userPayments = new HashMap<>();
+
+        this.allUsers = new ArrayList<>();
     }
 
     private void initIdentity() {
@@ -73,15 +81,30 @@ public class Vendor {
         return this.privateKey;
     }
 
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public Account getAccount() {
+        return this.account;
+    }
+
+    private UserInfo getUserWithIdentity(byte[] userIdentity) {
+        for (UserInfo userInfo : allUsers)
+            if (Arrays.equals(userInfo.getIdentity(), userIdentity))
+                return userInfo;
+        return null;
+    }
+
     /**
      * Add a new commit from a user
      * @param commit
      * @return
      */
-    public boolean addNewCommit(Commit commit) {
+    public boolean addNewCommit(User user, Commit commit) {
         //TODO: extract userInfo from the commit, if possible
         UserInfo userInfo = new UserInfo();
-        userInfo.setIdentity(new byte[1024]);
+        userInfo.setIdentity(user.getIdentity());
 
         userCommitments.put(userInfo, commit);
 
@@ -93,14 +116,22 @@ public class Vendor {
         return true;
     }
 
-    public boolean addNewPayment(Payment payment) {
+    public boolean addNewPayment(User user, Payment payment) {
         //TODO: extract userInfo from the commit, if possible
         UserInfo userInfo = new UserInfo();
-        userInfo.setIdentity(new byte[1024]);
+        userInfo.setIdentity(user.getIdentity());
 
-        List<Payment> listOfPayments = new ArrayList<>();
-        listOfPayments.add(payment);
-        userPayments.put(userInfo, listOfPayments);
+        if (userPayments.get(userInfo) != null) {
+            List<Payment> listOfPayments = userPayments.get(userInfo);
+            listOfPayments.add(payment);
+            userPayments.remove(userInfo);
+            userPayments.put(userInfo, listOfPayments);
+        }
+        else {
+            List<Payment> listOfPayments = new ArrayList<>();
+            listOfPayments.add(payment);
+            userPayments.put(userInfo, listOfPayments);
+        }
 
         System.out.println("Vendor.addNewPayment: paymentNo=" + payment.getPaywordNo());
 
@@ -113,34 +144,35 @@ public class Vendor {
      * @return true if the action completed with success, false otherwise
      */
     public boolean redeem() {
-        //TODO: fix this
-        UserInfo userInfo = new UserInfo();
-        userInfo.setIdentity(new byte[1024]);
 
-        List<Payment> paymentList = userPayments.get(userInfo);
-        int size = userCommitments.get(userInfo).getBytes().length + paymentList.get(paymentList.size() - 1).getBytes().length + Constants.INT_NO_OF_BYTES;
-        byte[] message = new byte[24];
+        //redeem all payments done by all users
+        for (UserInfo userInfo : userCommitments.keySet()) {
 
-        int index = 0;
+            List<Payment> paymentList = userPayments.get(userInfo);
+            int size = userCommitments.get(userInfo).getBytes().length + paymentList.get(paymentList.size() - 1).getBytes().length + Constants.INT_NO_OF_BYTES;
+            byte[] message = new byte[size];
 
-        //copy the commit
-        byte[] commitBytes = userCommitments.get(userInfo).getBytes();
-        for (int i = 0; i < commitBytes.length; ++i, ++index)
-            message[index] = commitBytes[i];
+            int index = 0;
 
-        //copy the last payword received
-        byte[] lastPaywordBytes = paymentList.get(paymentList.size() - 1).getBytes();
-        for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
-            message[index] = lastPaywordBytes[i];
+            //copy the commit
+            byte[] commitBytes = userCommitments.get(userInfo).getBytes();
+            for (int i = 0; i < commitBytes.length; ++i, ++index)
+                message[index] = commitBytes[i];
 
-        //copy the index of the last payword received
-        byte[] lastPaywordIndexBytes = ByteBuffer.allocate(4).putInt(paymentList.size()).array();
-        for (int i = 0; i < lastPaywordIndexBytes.length; ++i, ++index)
-            message[index] = lastPaywordIndexBytes[i];
+            //copy the last payword received
+            byte[] lastPaywordBytes = paymentList.get(paymentList.size() - 1).getBytes();
+            for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
+                message[index] = lastPaywordBytes[i];
 
-        //send message to the Broker to redeem the payments
-        Broker broker = Broker.getInstance();
-        broker.redeem(message);
+            //copy the index of the last payword received
+            byte[] lastPaywordIndexBytes = ByteBuffer.allocate(4).putInt(paymentList.size()).array();
+            for (int i = 0; i < lastPaywordIndexBytes.length; ++i, ++index)
+                message[index] = lastPaywordIndexBytes[i];
+
+            //send message to the Broker to redeem the payments
+            Broker broker = Broker.getInstance();
+            broker.redeem(this, message);
+        }
 
         return true;
     }

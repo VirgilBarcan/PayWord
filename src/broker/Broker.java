@@ -3,6 +3,7 @@ package broker;
 import user.UserInfo;
 import utils.Constants;
 import utils.Crypto;
+import vendor.Vendor;
 import vendor.VendorInfo;
 
 import java.nio.ByteBuffer;
@@ -29,6 +30,7 @@ public class Broker {
     private List<UserInfo> registeredUsers;
     private List<VendorInfo> registeredVendors;
 
+    private Bank bank;
     private static Broker instance;
 
     public static Broker getInstance() {
@@ -46,6 +48,8 @@ public class Broker {
         initIdentity();
         this.registeredUsers = new ArrayList<>();
         this.registeredVendors = new ArrayList<>();
+
+        this.bank = Bank.getInstance();
     }
 
     public Broker(String identity) {
@@ -62,6 +66,8 @@ public class Broker {
 
         this.registeredUsers = new ArrayList<>();
         this.registeredVendors = new ArrayList<>();
+
+        this.bank = Bank.getInstance();
     }
 
     private void initIdentity() {
@@ -289,14 +295,24 @@ public class Broker {
         return null;
     }
 
-    public boolean redeem(byte[] message) {
+    public boolean redeem(Vendor vendor, byte[] message) {
         //check commit(U)
 
         //check last payment (apply hash function l times)
 
         //check if payment is authentic and not already redeemed
 
+
+        //get User identity from the certificate inside the commit
+
+
         //make payment to Vendor and take money from User
+        int lastPaymentIndex = ByteBuffer.wrap(message, message.length - 4, 4).getInt();
+        System.out.println("Broker.redeem: lastPaymentIndex=" + lastPaymentIndex);
+
+        //Proof of Concept
+        bank.takeMoneyFromAccount(1, lastPaymentIndex);
+        bank.addMoneyToAccount(vendor.getAccount().getAccountNumber(), lastPaymentIndex);
 
         return true;
     }
