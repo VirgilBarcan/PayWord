@@ -309,8 +309,37 @@ public class Broker {
     }
 
     public boolean redeem(Vendor vendor, byte[] message) {
-        //TODO: check commit(U)
+        //check commit(U)
+        //extract commit(U) from the message
+        //get the unsigned part
+        int size = 892; //the no of bytes of the message without the signed hash
+        byte[] unsignedMessage = Arrays.copyOfRange(message, 0, size);
 
+        //get the signed hash
+        byte[] signedHash = Arrays.copyOfRange(message, size, 1020);
+
+        //get the user identity
+        byte[] userCertificate = Arrays.copyOfRange(unsignedMessage, 128, 128 + 732);
+        byte[] userIdentity = Arrays.copyOfRange(userCertificate, 128, 256);
+        UserInfo userInfo = getUserWithIdentity(userIdentity);
+
+        Signature signature = null;
+        boolean result = false;
+        try {
+            signature = Signature.getInstance("SHA1WithRSA");
+            signature.initVerify(userInfo.getPublicKey());
+            signature.update(unsignedMessage);
+            result = signature.verify(signedHash);
+            System.out.println("Broker.redeem: verify User signature on commit result: " + result);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+
+        //check User signature on commit(U)
 
         //TODO: check last payment (apply hash function l times)
 

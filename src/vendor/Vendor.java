@@ -128,6 +128,10 @@ public class Vendor {
             //check B's signature on C(U)
             //extract C(U) from the commit
             byte[] userCertificate = Arrays.copyOfRange(commit.getBytes(), this.identity.length, this.identity.length + 732);
+
+            //get the unsigned part
+            byte[] unsignedPart = Arrays.copyOfRange(userCertificate, 0, 604);
+
             //get the signed hash
             signedHash = Arrays.copyOfRange(userCertificate, 604, userCertificate.length);
 
@@ -137,7 +141,7 @@ public class Vendor {
                 Broker broker = Broker.getInstance();
                 signature = Signature.getInstance("SHA1WithRSA");
                 signature.initVerify(broker.getPublicKey());
-                signature.update(message);
+                signature.update(unsignedPart);
                 result = signature.verify(signedHash);
                 System.out.println("Vendor.addNewCommit: verify Broker signature on User certificate result: " + result);
                 if (result) {

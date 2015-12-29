@@ -29,14 +29,14 @@ public class Main {
         vendor1.setAccount(vendor1Account);
 
         user1.registerToBroker(1000);
-        user2.registerToBroker(1234);
+        //user2.registerToBroker(1234);
 
         System.out.println("User1 account balance=" + bank.getAccountBalance(user1.getAccount().getAccountNumber()));
         System.out.println("Vendor1 account balance=" + bank.getAccountBalance(vendor1.getAccount().getAccountNumber()));
         for (int i = 0; i < 10; ++i) {
             user1.payVendor(vendor1);
         }
-        user2.payVendor(vendor1);
+        //user2.payVendor(vendor1);
         vendor1.redeem();
 
         System.out.println("User1 account balance=" + bank.getAccountBalance(user1.getAccount().getAccountNumber()));
