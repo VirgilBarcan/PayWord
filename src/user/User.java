@@ -247,7 +247,8 @@ public class User {
 
         Payword last = new Payword(cn); //c(n-1)
         currentHashChain.add(last);
-        for (int i = this.hashChainLength - 2; i >= 0; --i) {
+        int i = 1;
+        for (i = this.hashChainLength - 2; i >= 0; --i) {
             Payword current = new Payword(last);
             currentHashChain.add(current);
 
@@ -384,6 +385,8 @@ public class User {
         for (int i = 0; i < ci.length; ++i, ++index) {
             bytes[index] = ci[i];
         }
+
+        System.out.println("User.makePayment: " + Arrays.toString(ci));
 
         //copy the bytes of paymentNo
         byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();

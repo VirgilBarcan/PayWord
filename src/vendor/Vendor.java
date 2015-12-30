@@ -208,15 +208,13 @@ public class Vendor {
             for (int i = 0; i < commitBytes.length; ++i, ++index)
                 message[index] = commitBytes[i];
 
-            //copy the last payword received
+            //copy the last payword received and its index
             byte[] lastPaywordBytes = paymentList.get(paymentList.size() - 1).getBytes();
+
             for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
                 message[index] = lastPaywordBytes[i];
 
-            //copy the index of the last payword received
-            byte[] lastPaywordIndexBytes = ByteBuffer.allocate(4).putInt(paymentList.size()).array();
-            for (int i = 0; i < lastPaywordIndexBytes.length; ++i, ++index)
-                message[index] = lastPaywordIndexBytes[i];
+            System.out.println("Vendor.redeem: lastPaywordBytes=" + Arrays.toString(lastPaywordBytes));
 
             //send message to the Broker to redeem the payments
             Broker broker = Broker.getInstance();

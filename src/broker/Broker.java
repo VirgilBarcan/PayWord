@@ -3,6 +3,7 @@ package broker;
 import user.UserInfo;
 import utils.Constants;
 import utils.Crypto;
+import utils.Payword;
 import vendor.Vendor;
 import vendor.VendorInfo;
 
@@ -288,7 +289,7 @@ public class Broker {
         byte[] signedHash = Arrays.copyOfRange(message, size, 1020);
 
         //get the user identity
-        byte[] userCertificate = Arrays.copyOfRange(unsignedMessage, 128, 128 + 732);
+        byte[] userCertificate = Arrays.copyOfRange(unsignedMessage, 128, 860);
         byte[] userIdentity = Arrays.copyOfRange(userCertificate, 128, 256);
         UserInfo userInfo = getUserWithIdentity(userIdentity);
 
@@ -309,19 +310,48 @@ public class Broker {
             e.printStackTrace();
         }
 
-        //TODO: check last payment (apply hash function l times)
+        if (result) {
+            //TODO: check last payment (apply hash function l times)
+            //get c0 - the root of the hash chain from the commit
+            byte[] c0 = Arrays.copyOfRange(unsignedMessage, 860, 880); //get 20 bytes
+            System.out.println("Broker.redeem: c0=" + Arrays.toString(c0));
 
-        //TODO: check if payment is authentic and not already redeemed
+            //apply the hash function l times to see if the resulting c0 is equal with the given c0
+            //get cl - the l-th payword
+            byte[] cl = Arrays.copyOfRange(message, 1020, 1040);
+            System.out.println("Broker.redeem: cl=" + Arrays.toString(cl));
+
+            //get l - the index of the last payment
+            int l = ByteBuffer.wrap(message, 1040, 4).getInt();
+            System.out.println("Broker.redeem: l=" + l);
+
+            //apply the hash function l times
+            Payword last = new Payword(cl); //c(l-1)
+            for (int i = l - 2; i >= 0; --i) {
+                System.out.println("Broker.redeem: l=" + i + " cl=" + Arrays.toString(last.getBytes()));
+                Payword current = new Payword(last);
+
+                last = current;
+            }
+            byte[] c0computed = last.getBytes();
+
+            if (Arrays.equals(c0, c0computed)) {
+                System.out.println("Broker.redeem: c0 equals!");
+                //TODO: check if payment is authentic and not already redeemed
 
 
-        //make payment to Vendor and take money from User
-        int lastPaymentIndex = ByteBuffer.wrap(message, message.length - 4, 4).getInt();
-        System.out.println("Broker.redeem: lastPaymentIndex=" + lastPaymentIndex);
+                //make payment to Vendor and take money from User
+                System.out.println("Broker.redeem: lastPaymentIndex=" + l);
 
-        //Proof of Concept
-        bank.takeMoneyFromAccount(userInfo.getAccountNumber(), lastPaymentIndex);
-        bank.addMoneyToAccount(vendor.getAccount().getAccountNumber(), lastPaymentIndex);
+                //Proof of Concept
+                bank.takeMoneyFromAccount(userInfo.getAccountNumber(), l + 1);
+                bank.addMoneyToAccount(vendor.getAccount().getAccountNumber(), l + 1);
+            } else {
+                System.out.println("Broker.redeem: c0 not equals!");
+                result = false;
+            }
+        }
 
-        return true;
+        return result;
     }
 }
