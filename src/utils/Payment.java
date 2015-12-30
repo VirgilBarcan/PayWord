@@ -24,7 +24,8 @@ public class Payment {
         for (int i = 0; i < 20; ++i)
             paywordBytes[i] = this.bytes[i];
 
-        Payword payword = new Payword(paywordBytes);
+        Payword payword = new Payword();
+        payword.setBytes(paywordBytes);
 
         return payword;
     }

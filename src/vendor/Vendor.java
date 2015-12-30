@@ -4,10 +4,7 @@ import broker.Broker;
 import user.Account;
 import user.User;
 import user.UserInfo;
-import utils.Commit;
-import utils.Constants;
-import utils.Crypto;
-import utils.Payment;
+import utils.*;
 
 import java.nio.ByteBuffer;
 import java.security.*;
@@ -172,9 +169,25 @@ public class Vendor {
 
         if (userPayments.get(userInfo) != null) {
             List<Payment> listOfPayments = userPayments.get(userInfo);
-            listOfPayments.add(payment);
-            userPayments.remove(userInfo);
-            userPayments.put(userInfo, listOfPayments);
+
+            //check if payment is authentic: eg: h(ci) = c(i-1)
+            Payword ci = payment.getPayword();
+            Payword ciHash = new Payword(ci);
+            Payword ci_1 = listOfPayments.get(listOfPayments.size() - 1).getPayword();
+            if (ciHash.equals(ci_1)) {
+                System.out.println("Vendor.addNewPayment: authentic payment! => add to the list of payments");
+
+                listOfPayments.add(payment);
+                userPayments.remove(userInfo);
+                userPayments.put(userInfo, listOfPayments);
+            }
+            else {
+                System.out.println("Vendor.addNewPayment: not authentic payment! => don't add to the list of payments");
+
+                //TODO: do something to stop the service and force the user to redo all steps: generate commit and new payment
+                //TODO: redeem what the user paid so far ??
+                return false;
+            }
         }
         else {
             List<Payment> listOfPayments = new ArrayList<>();

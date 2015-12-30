@@ -331,14 +331,16 @@ public class Broker {
             System.out.println("Broker.redeem: l=" + l);
 
             //apply the hash function l times
-            Payword last = new Payword(cl); //c(l-1)
-            for (int i = l - 2; i >= 0; --i) {
+            Payword last = new Payword(); //c(l)
+            last.setBytes(cl);
+            for (int i = l - 1; i >= 0; --i) {
                 System.out.println("Broker.redeem: l=" + i + " cl=" + Arrays.toString(last.getBytes()));
                 Payword current = new Payword(last);
 
                 last = current;
             }
             byte[] c0computed = last.getBytes();
+            System.out.println("Broker.redeem: c0computed=" + Arrays.toString(c0computed));
             Payword rootOfPayment = new Payword();
             rootOfPayment.setBytes(c0computed);
 

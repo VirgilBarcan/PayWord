@@ -223,6 +223,8 @@ public class User {
         //send the payment to the vendor
         makePayment(vendor, paymentNo);
 
+        //makePayment(vendor, paymentNo + 2); //test if the Vendor accepts non-authentic payments; it does not
+
         return false;
     }
 
@@ -395,16 +397,21 @@ public class User {
         }
 
         Payment payment = new Payment(bytes);
-        vendor.addNewPayment(this, payment);
+        boolean addPaymentResult = vendor.addNewPayment(this, payment);
 
-        List<Payment> paymentList;
-        if (paymentsDone.get(vendor) != null)
-            paymentList = paymentsDone.get(vendor);
-        else
-            paymentList = new ArrayList<>();
+        if (addPaymentResult) {
+            List<Payment> paymentList;
+            if (paymentsDone.get(vendor) != null)
+                paymentList = paymentsDone.get(vendor);
+            else
+                paymentList = new ArrayList<>();
 
-        paymentList.add(payment);
-        paymentsDone.remove(vendor);
-        paymentsDone.put(vendor, paymentList);
+            paymentList.add(payment);
+            paymentsDone.remove(vendor);
+            paymentsDone.put(vendor, paymentList);
+        }
+        else {
+            //TODO: redo all steps: generate commit, make new payment, as the payment was corrupted
+        }
     }
 }
