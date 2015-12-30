@@ -3,8 +3,7 @@ package broker;
 import user.UserInfo;
 import utils.Constants;
 import utils.Crypto;
-import utils.Payment;
-import utils.Payword;
+import backend.Payword;
 import vendor.Vendor;
 import vendor.VendorInfo;
 
@@ -13,12 +12,10 @@ import java.security.*;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -283,6 +280,12 @@ public class Broker {
         return null;
     }
 
+    /**
+     * This is the third stept of the scheme
+     * @param vendor the vendor
+     * @param message the message
+     * @return true if the action completed with success, false otherwise
+     */
     public boolean redeem(Vendor vendor, byte[] message) {
         //check commit(U)
         //extract commit(U) from the message
@@ -371,4 +374,5 @@ public class Broker {
 
         return result;
     }
+
 }

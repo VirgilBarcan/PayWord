@@ -1,7 +1,6 @@
 package broker;
 
-import user.Account;
-import user.User;
+import backend.Account;
 
 import java.util.ArrayList;
 import java.util.List;

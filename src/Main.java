@@ -1,6 +1,6 @@
 import broker.Bank;
 import broker.Broker;
-import user.Account;
+import backend.Account;
 import user.User;
 import vendor.Vendor;
 
