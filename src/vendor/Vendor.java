@@ -198,7 +198,7 @@ public class Vendor {
         for (UserInfo userInfo : userCommitments.keySet()) {
 
             List<Payment> paymentList = userPayments.get(userInfo);
-            int size = userCommitments.get(userInfo).getBytes().length + paymentList.get(paymentList.size() - 1).getBytes().length + Constants.INT_NO_OF_BYTES;
+            int size = userCommitments.get(userInfo).getBytes().length + paymentList.get(paymentList.size() - 1).getBytes().length;
             byte[] message = new byte[size];
 
             int index = 0;
@@ -219,6 +219,7 @@ public class Vendor {
             //send message to the Broker to redeem the payments
             Broker broker = Broker.getInstance();
             broker.redeem(this, message);
+            //broker.redeem(this, message); //test if trying to redeem twice works; it should not be accepted
         }
 
         return true;

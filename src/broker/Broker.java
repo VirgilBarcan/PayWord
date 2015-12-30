@@ -3,6 +3,7 @@ package broker;
 import user.UserInfo;
 import utils.Constants;
 import utils.Crypto;
+import utils.Payment;
 import utils.Payword;
 import vendor.Vendor;
 import vendor.VendorInfo;
@@ -31,6 +32,8 @@ public class Broker {
     private List<UserInfo> registeredUsers;
     private List<VendorInfo> registeredVendors;
 
+    private List<Payword> paymentsRedeemed;
+
     private Bank bank;
     private static Broker instance;
 
@@ -49,6 +52,7 @@ public class Broker {
         initIdentity();
         this.registeredUsers = new ArrayList<>();
         this.registeredVendors = new ArrayList<>();
+        this.paymentsRedeemed = new ArrayList<>();
 
         this.bank = Bank.getInstance();
     }
@@ -67,6 +71,7 @@ public class Broker {
 
         this.registeredUsers = new ArrayList<>();
         this.registeredVendors = new ArrayList<>();
+        this.paymentsRedeemed = new ArrayList<>();
 
         this.bank = Bank.getInstance();
     }
@@ -311,7 +316,7 @@ public class Broker {
         }
 
         if (result) {
-            //TODO: check last payment (apply hash function l times)
+            //check last payment (apply hash function l times)
             //get c0 - the root of the hash chain from the commit
             byte[] c0 = Arrays.copyOfRange(unsignedMessage, 860, 880); //get 20 bytes
             System.out.println("Broker.redeem: c0=" + Arrays.toString(c0));
@@ -334,18 +339,28 @@ public class Broker {
                 last = current;
             }
             byte[] c0computed = last.getBytes();
+            Payword rootOfPayment = new Payword();
+            rootOfPayment.setBytes(c0computed);
 
             if (Arrays.equals(c0, c0computed)) {
                 System.out.println("Broker.redeem: c0 equals!");
-                //TODO: check if payment is authentic and not already redeemed
+                //check if payment is authentic and not already redeemed
+                //check if payment is not redeemed
+                if (paymentsRedeemed.contains(rootOfPayment)) {
+                    System.out.println("Broker.redeem: payment already done! => don't pay the vendor!");
+                    result = false;
+                }
+                else {
+                    System.out.println("Broker.redeem: first payment! => pay the vendor");
+                    //make payment to Vendor and take money from User
+                    System.out.println("Broker.redeem: lastPaymentIndex=" + l);
 
-
-                //make payment to Vendor and take money from User
-                System.out.println("Broker.redeem: lastPaymentIndex=" + l);
-
-                //Proof of Concept
-                bank.takeMoneyFromAccount(userInfo.getAccountNumber(), l + 1);
-                bank.addMoneyToAccount(vendor.getAccount().getAccountNumber(), l + 1);
+                    //Proof of Concept
+                    bank.takeMoneyFromAccount(userInfo.getAccountNumber(), l + 1);
+                    bank.addMoneyToAccount(vendor.getAccount().getAccountNumber(), l + 1);
+                    paymentsRedeemed.add(rootOfPayment);
+                    result = true;
+                }
             } else {
                 System.out.println("Broker.redeem: c0 not equals!");
                 result = false;

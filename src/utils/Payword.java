@@ -9,6 +9,10 @@ public class Payword {
 
     private byte[] bytes;
 
+    public Payword() {
+        this.bytes = new byte[20];
+    }
+
     public Payword(byte[] bytes) {
         this.bytes = Crypto.hashMessage(bytes);
     }
@@ -19,6 +23,10 @@ public class Payword {
 
     public byte[] getBytes() {
         return this.bytes;
+    }
+
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
     }
 
     @Override
