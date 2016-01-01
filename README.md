@@ -2,6 +2,7 @@
 This is my Information Security project
 It models a PayWord protocol, as described in docs/RS96a.prepub.pdf.
 
+##Security architecture
 For this project, the SHA-1 hash function will be used; SHA-1 "digests" messages and outputs 180 bits.
 The messages are signed using RSA digital signature.
 
@@ -34,3 +35,14 @@ The steps to be taken:
     User sends the i-th payment of the day to the Vendor by sending the pair (ci, i).
 ###3. Redeem:
     Considering (cl, l) the last payment pair, the Vendor send to the Broker a message containing: commit(U), cl, l.
+
+
+##Client-Server architecture
+###Broker:
+    The Broker will act as a Server, waiting for connections and requests from User(s) and Vendor(s).
+
+###User:
+    The User will act as a Client, it will start connections with the Broker and Vendor(s).
+
+###Vendor
+    The Vendor will act as both a Client and a Server, it will wait connections from the User(s) and start connections with the Broker.
