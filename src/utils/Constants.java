@@ -10,4 +10,14 @@ public class Constants {
     public static final int LONG_NO_OF_BYTES = 8;
     public static final int INT_NO_OF_BYTES = 4;
 
+    public static final String LOCALHOST = "localhost";
+
+    public static class CommunicationProtocol {
+        public static final int END_COMMUNICATION = -1;
+        public static final int OK = 1;
+        public static final int NOK = 0;
+        public static final int REGISTER_TO_BROKER = 11;
+
+    }
+
 }

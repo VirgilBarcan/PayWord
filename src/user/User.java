@@ -149,7 +149,7 @@ public class User {
      * @param creditLimit the credit limit
      * @return the array of bytes that represents the personal info of the user
      */
-    private byte[] getPersonalInfo(long creditLimit) {
+    public byte[] getPersonalInfo(long creditLimit) {
         int size = Constants.INT_NO_OF_BYTES + identity.length + Constants.INT_NO_OF_BYTES + publicKey.getEncoded().length + 2 * Constants.LONG_NO_OF_BYTES;
         byte[] personalInfo = new byte[size];
 

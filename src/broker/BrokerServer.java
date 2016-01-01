@@ -1,5 +1,7 @@
 package broker;
 
+import utils.Constants;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,7 +11,7 @@ import java.net.Socket;
  */
 public class BrokerServer implements Runnable {
 
-    private static final int PORT = 1994;
+    public static final int PORT = 1994;
 
     private Socket connection;
     private int connectionID;
@@ -43,25 +45,22 @@ public class BrokerServer implements Runnable {
     public void run() {
         try {
             DataInputStream dataInputStream = new DataInputStream(connection.getInputStream());
-            int messageID = dataInputStream.readInt();
+            DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
 
-            System.out.println("BrokerServer.run: messageID=" + messageID);
+            int commandID;
 
-            //TODO: Do here all things involving the Broker depending on what the client asked
-            try {
-                Thread.sleep(10000);
+            while ((commandID = dataInputStream.readInt()) != Constants.CommunicationProtocol.END_COMMUNICATION) {
+                System.out.println("BrokerServer.run: commandID=" + commandID);
+
+                //TODO: Do here all things involving the Broker depending on what the client asked
+                processCommand(commandID, dataInputStream, dataOutputStream);
+
+                //TODO: Send data response to client
+                dataOutputStream.writeInt(commandID);
             }
-            catch (Exception e){
-                e.printStackTrace();
-            }
 
-            //TODO: Send data response to client
-            String timeStamp = new java.util.Date().toString();
-            String returnCode = "ServerSocket responded at "+ timeStamp + (char) 13;
-            BufferedOutputStream os = new BufferedOutputStream(connection.getOutputStream());
-            OutputStreamWriter osw = new OutputStreamWriter(os, "US-ASCII");
-            osw.write(returnCode);
-            osw.flush();
+            System.out.println("BrokerServer.run: Communication with the User ended!");
+
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -73,6 +72,38 @@ public class BrokerServer implements Runnable {
             catch (IOException e){
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void processCommand(int commandID, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+        System.out.println("BrokerServer.processCommand: commandID=" + commandID);
+        try {
+            switch (commandID) {
+                case Constants.CommunicationProtocol.REGISTER_TO_BROKER:
+                    //wait for user personal info length
+                    int lengthOfUserPersonalInfo = dataInputStream.readInt();
+
+                    //wait for user personal info
+                    byte[] userPersonalInfo = new byte[lengthOfUserPersonalInfo];
+                    dataInputStream.read(userPersonalInfo);
+
+                    //send data to broker instance
+                    boolean resultOfRegister = broker.registerNewUser(userPersonalInfo);
+
+                    if (resultOfRegister) {
+                        dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
+                    }
+                    else {
+                        dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

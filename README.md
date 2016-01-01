@@ -46,3 +46,4 @@ The steps to be taken:
 
 ###Vendor
     The Vendor will act as both a Client and a Server, it will wait connections from the User(s) and start connections with the Broker.
+    
