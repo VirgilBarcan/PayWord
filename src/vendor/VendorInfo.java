@@ -62,4 +62,13 @@ public class VendorInfo {
         result = 31 * result + (int) (accountNumber ^ (accountNumber >>> 32));
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "VendorInfo{" +
+                "publicKey=" + publicKey +
+                ", identity=" + Arrays.toString(identity) +
+                ", accountNumber=" + accountNumber +
+                '}';
+    }
 }

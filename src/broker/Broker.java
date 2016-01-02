@@ -280,6 +280,16 @@ public class Broker {
         return null;
     }
 
+    public byte[] getUserIdentityFromPersonalInfo(byte[] personalInfo) {
+        //get identity length
+        int identityLength = ByteBuffer.wrap(personalInfo, 0, 4).getInt();
+
+        //get the identity
+        byte[] userIdentity = Arrays.copyOfRange(personalInfo, 4, 4 + identityLength);
+
+        return userIdentity;
+    }
+
     /**
      * This is the third stept of the scheme
      * @param vendor the vendor

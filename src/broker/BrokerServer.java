@@ -77,33 +77,45 @@ public class BrokerServer implements Runnable {
 
     private void processCommand(int commandID, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
         System.out.println("BrokerServer.processCommand: commandID=" + commandID);
+        switch (commandID) {
+            case Constants.CommunicationProtocol.REGISTER_TO_BROKER:
+                registerToBroker(dataInputStream, dataOutputStream);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private boolean registerToBroker(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
         try {
-            switch (commandID) {
-                case Constants.CommunicationProtocol.REGISTER_TO_BROKER:
-                    //wait for user personal info length
-                    int lengthOfUserPersonalInfo = dataInputStream.readInt();
+            //wait for user personal info length
+            int lengthOfUserPersonalInfo = dataInputStream.readInt();
 
-                    //wait for user personal info
-                    byte[] userPersonalInfo = new byte[lengthOfUserPersonalInfo];
-                    dataInputStream.read(userPersonalInfo);
+            //wait for user personal info
+            byte[] userPersonalInfo = new byte[lengthOfUserPersonalInfo];
+            dataInputStream.read(userPersonalInfo);
 
-                    //send data to broker instance
-                    boolean resultOfRegister = broker.registerNewUser(userPersonalInfo);
+            //send data to broker instance
+            boolean resultOfRegister = broker.registerNewUser(userPersonalInfo);
 
-                    if (resultOfRegister) {
-                        dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
-                    }
-                    else {
-                        dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
-                    }
-
-                    break;
-
-                default:
-                    break;
+            if (resultOfRegister) {
+                dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
+            } else {
+                dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
             }
+
+            byte[] userCertificate = broker.getUserCertificate(broker.getUserIdentityFromPersonalInfo(userPersonalInfo));
+            //send the user certificate length
+            dataOutputStream.writeInt(userCertificate.length);
+
+            //send the user certificate
+            dataOutputStream.write(userCertificate);
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
+
+        return true;
     }
 }

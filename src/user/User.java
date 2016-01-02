@@ -7,6 +7,7 @@ import backend.Payword;
 import broker.Broker;
 import utils.*;
 import vendor.Vendor;
+import vendor.VendorInfo;
 
 import java.nio.ByteBuffer;
 import java.security.*;
@@ -30,8 +31,8 @@ public class User {
     private byte[] userCertificate;
 
     private int hashChainLength;
-    private Map<Vendor, List<Payment>> paymentsDone;
-    private Map<Vendor, List<List<Payword>>> hashChains;
+    private Map<VendorInfo, List<Payment>> paymentsDone;
+    private Map<VendorInfo, List<List<Payword>>> hashChains;
 
     public User() {
         broker = Broker.getInstance();
@@ -90,6 +91,14 @@ public class User {
 
     public Account getAccount() {
         return this.account;
+    }
+
+    public byte[] getUserCertificate() {
+        return userCertificate;
+    }
+
+    public void setUserCertificate(byte[] userCertificate) {
+        this.userCertificate = userCertificate;
     }
 
     /**
@@ -208,14 +217,18 @@ public class User {
      */
     public boolean payVendor(Vendor vendor) {
         int paymentNo;
-        if (isFirstPayment(vendor)) {
+
+        VendorInfo vendorInfo = new VendorInfo();
+        vendorInfo.setIdentity(vendor.getIdentity());
+
+        if (isFirstPayment(vendorInfo)) {
             paymentNo = 0;
 
             //generate the new hash chain for this vendor
-            generateNewHashChain(vendor);
+            generateNewHashChain(vendorInfo);
 
             //compute the commit(V)
-            Commit commit = computeCommitment(vendor);
+            Commit commit = computeCommitment(vendorInfo);
 
             //send the commit to the vendor
             sendCommit(vendor, commit);
@@ -234,18 +247,18 @@ public class User {
 
     /**
      * Check if this Vendor was already payed this day
-     * @param vendor the Vendor
+     * @param vendorInfo the VendorInfo
      * @return true if this is the first payment to the Vendor, false otherwise
      */
-    private boolean isFirstPayment(Vendor vendor) {
-        return !paymentsDone.containsKey(vendor);
+    public boolean isFirstPayment(VendorInfo vendorInfo) {
+        return !paymentsDone.containsKey(vendorInfo);
     }
 
     /**
      * Generate a new hash chain for the Vendor, in order to make it possible to pay him
-     * @param vendor the Vendor
+     * @param vendorInfo the Vendor
      */
-    private void generateNewHashChain(Vendor vendor) {
+    public void generateNewHashChain(VendorInfo vendorInfo) {
         System.out.println("Started generating hash chain");
         List<Payword> currentHashChain = new ArrayList<>();
 
@@ -263,16 +276,16 @@ public class User {
 
         System.out.println("Finished generating hash chain");
 
-        if (hashChains.get(vendor) != null) {
-            List<List<Payword>> vendorPreviousHashChains = hashChains.get(vendor);
+        if (hashChains.get(vendorInfo) != null) {
+            List<List<Payword>> vendorPreviousHashChains = hashChains.get(vendorInfo);
             vendorPreviousHashChains.add(currentHashChain);
-            hashChains.remove(vendor);
-            hashChains.put(vendor, vendorPreviousHashChains);
+            hashChains.remove(vendorInfo);
+            hashChains.put(vendorInfo, vendorPreviousHashChains);
         }
         else {
             List<List<Payword>> vendorPreviousHashChains = new ArrayList<>();
             vendorPreviousHashChains.add(currentHashChain);
-            hashChains.put(vendor, vendorPreviousHashChains);
+            hashChains.put(vendorInfo, vendorPreviousHashChains);
         }
 
     }
@@ -285,11 +298,13 @@ public class User {
      *  c0 is the root of the hash chain,
      *  D is the current date,
      *  I are additional info: length of the chain, etc.
-     * @param vendor the Vendor
+     * @param vendorInfo the Vendor
      * @return the commit
      */
-    private Commit computeCommitment(Vendor vendor) {
-        int size = vendor.getIdentity().length + userCertificate.length + 20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
+    public Commit computeCommitment(VendorInfo vendorInfo) {
+        int size = vendorInfo.getIdentity().length +
+                userCertificate.length +
+                20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
         byte[] message = new byte[size];
 
         System.out.println("User.computeCommitment: size = " + size);
@@ -297,7 +312,7 @@ public class User {
         int index = 0;
 
         //copy vendor's identity
-        byte[] vendorIdentity = vendor.getIdentity();
+        byte[] vendorIdentity = vendorInfo.getIdentity();
         for (int i = 0; i < vendorIdentity.length; ++i, ++index) {
             message[index] = vendorIdentity[i];
         }
@@ -308,7 +323,7 @@ public class User {
         }
 
         //copy the root of the signedHash chain, c0
-        List<List<Payword>> allHashChains = hashChains.get(vendor);
+        List<List<Payword>> allHashChains = hashChains.get(vendorInfo);
         List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
         byte[] c0 = lastHashChainComputed.get(this.hashChainLength - 1).getBytes();
         for (int i = 0; i < c0.length; ++i, ++index) {
@@ -368,7 +383,7 @@ public class User {
      * @param vendor the Vendor
      * @param commit the commit
      */
-    private void sendCommit(Vendor vendor, Commit commit) {
+    public void sendCommit(Vendor vendor, Commit commit) {
         vendor.addNewCommit(this, commit);
     }
 
@@ -377,15 +392,18 @@ public class User {
      * @param vendor the Vendor
      * @param paymentNo the index of the payment
      */
-    private void makePayment(Vendor vendor, int paymentNo) {
+    public void makePayment(Vendor vendor, int paymentNo) {
         byte[] bytes = new byte[24];
 
         System.out.println("User.makePayment: paymentNo=" + paymentNo);
 
+        VendorInfo vendorInfo = new VendorInfo();
+        vendorInfo.setIdentity(vendor.getIdentity());
+
         int index = 0;
 
         //copy the paymentNo-th payword
-        List<List<Payword>> allHashChains = hashChains.get(vendor);
+        List<List<Payword>> allHashChains = hashChains.get(vendorInfo);
         List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
         byte[] ci = lastHashChainComputed.get(this.hashChainLength - paymentNo - 1).getBytes();
         for (int i = 0; i < ci.length; ++i, ++index) {
@@ -400,22 +418,27 @@ public class User {
             bytes[index] = paymentNoBytes[i];
         }
 
+        //Send payment to Vendor
         Payment payment = new Payment(bytes);
         boolean addPaymentResult = vendor.addNewPayment(this, payment);
 
         if (addPaymentResult) {
             List<Payment> paymentList;
-            if (paymentsDone.get(vendor) != null)
-                paymentList = paymentsDone.get(vendor);
+            if (paymentsDone.get(vendorInfo) != null)
+                paymentList = paymentsDone.get(vendorInfo);
             else
                 paymentList = new ArrayList<>();
 
             paymentList.add(payment);
-            paymentsDone.remove(vendor);
-            paymentsDone.put(vendor, paymentList);
+            paymentsDone.remove(vendorInfo);
+            paymentsDone.put(vendorInfo, paymentList);
         }
         else {
             //TODO: redo all steps: generate commit, make new payment, as the payment was corrupted
         }
+    }
+
+    public int getVendorNoOfPayments(VendorInfo vendorInfo) {
+        return paymentsDone.get(vendorInfo).size();
     }
 }
