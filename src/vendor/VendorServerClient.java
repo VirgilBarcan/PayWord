@@ -1,8 +1,10 @@
 package vendor;
 
 import backend.Account;
+import backend.Commit;
 import broker.Bank;
 import broker.Broker;
+import user.UserInfo;
 import utils.Constants;
 
 import java.io.DataInputStream;
@@ -79,9 +81,15 @@ public class VendorServerClient {
         private Socket connection;
         private int connectionID;
 
+        private UserInfo userInfo;
+
         public ConnectionRunnable(Socket connection, int connectionID) {
             this.connection = connection;
             this.connectionID = connectionID;
+        }
+
+        public void setUserInfo(UserInfo userInfo) {
+            this.userInfo = userInfo;
         }
 
         @Override
@@ -158,15 +166,23 @@ public class VendorServerClient {
             try {
                 //get commit length
                 int commitLength = dataInputStream.readInt();
-                System.out.println("ConnectionRunnable.handleReceiveCommit: commitLength=" + commitLength);
+
                 //get commit bytes
                 byte[] bytes = new byte[commitLength];
                 dataInputStream.read(bytes);
-                System.out.println("ConnectionRunnable.handleReceiveCommit: commitBytes=" + Arrays.toString(bytes));
+                Commit commit = new Commit(bytes);
+
                 //TODO: Process the commit
+                //get userInfo from the commit
+                UserInfo userInfo = commit.getUserInfoFromCommit();
+                System.out.println("ConnectionRunnable.handleReceiveCommit: userInfo=" + userInfo);
+                setUserInfo(userInfo);
+
+                //add the commit to the vendor
+                boolean result = vendor.addNewCommit(userInfo, commit);
 
                 //Proof of concept: just send the confirmation
-                if (true) {
+                if (result) {
                     dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
                     System.out.println("ConnectionRunnable.handleReceiveCommit: response=OK(1)");
                 } else {

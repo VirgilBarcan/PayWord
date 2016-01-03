@@ -73,4 +73,14 @@ public class UserInfo {
         result = 31 * result + (int) (creditLimit ^ (creditLimit >>> 32));
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "UserInfo{" +
+                "publicKey=" + publicKey + ",\n" +
+                "identity=" + Arrays.toString(identity) + ",\n" +
+                "accountNumber=" + accountNumber + ",\n" +
+                "creditLimit=" + creditLimit +
+                '}';
+    }
 }

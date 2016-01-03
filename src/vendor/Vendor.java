@@ -10,6 +10,9 @@ import user.UserInfo;
 import utils.*;
 
 import java.security.*;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 /**
@@ -99,6 +102,11 @@ public class Vendor {
      * @return
      */
     public boolean addNewCommit(User user, Commit commit) {
+        //TODO: extract userInfo from the commit, if possible
+        UserInfo userInfo = new UserInfo();
+        userInfo.setIdentity(user.getIdentity());
+        userInfo.setPublicKey(user.getPublicKey());
+
         //check U's signature on commit
         //get the unsigned part
         int size = 892; //the no of bytes of the message without the signed hash
@@ -144,10 +152,88 @@ public class Vendor {
                 result = signature.verify(signedHash);
                 System.out.println("Vendor.addNewCommit: verify Broker signature on User certificate result: " + result);
                 if (result) {
-                    //TODO: extract userInfo from the commit, if possible
-                    UserInfo userInfo = new UserInfo();
-                    userInfo.setIdentity(user.getIdentity());
+                    userCommitments.put(userInfo, commit);
+                }
 
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (SignatureException e) {
+                e.printStackTrace();
+            } catch (InvalidKeyException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        return result;
+    }
+
+    /**
+     * Add a new commit from a user
+     * @param commit
+     * @return
+     */
+    public boolean addNewCommit(UserInfo userInfo, Commit commit) {
+        //check U's signature on commit
+        //get the unsigned part
+        int size = 892; //the no of bytes of the message without the signed hash
+        byte[] message = Arrays.copyOfRange(commit.getBytes(), 0, size);
+
+        //get the signed hash
+        byte[] signedHash = Arrays.copyOfRange(commit.getBytes(), size, commit.getBytes().length);
+
+        Signature signature = null;
+        boolean result = false;
+        try {
+            signature = Signature.getInstance("SHA1WithRSA");
+            signature.initVerify(userInfo.getPublicKey());
+            signature.update(message);
+            result = signature.verify(signedHash);
+            System.out.println("Vendor.addNewCommit: verify User signature on commit result: " + result);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+
+        if (result) {
+            //check B's signature on C(U)
+            //extract C(U) from the commit
+            byte[] userCertificate = Arrays.copyOfRange(commit.getBytes(), this.identity.length, this.identity.length + 732);
+
+            //get the unsigned part
+            byte[] unsignedPart = Arrays.copyOfRange(userCertificate, 0, 604);
+
+            //get the signed hash
+            signedHash = Arrays.copyOfRange(userCertificate, 604, userCertificate.length);
+
+            //check the Broker signature on the user certificate
+            signature = null;
+            try {
+                //get the broker signature from the userCertificate
+                byte[] brokerSignatureBytes = Arrays.copyOfRange(userCertificate, 2 * (Constants.IDENTITY_NO_OF_BITS / 8), 2 * (Constants.IDENTITY_NO_OF_BITS / 8) + 162);
+                PublicKey brokerPublicKey = null;
+                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(brokerSignatureBytes);
+                KeyFactory keyFactory = null;
+                try {
+                    keyFactory = KeyFactory.getInstance("RSA");
+                    brokerPublicKey = keyFactory.generatePublic(keySpec);
+
+                    System.out.println("Vendor.addNewCommit: brokerPublicKey=" + ((RSAPublicKey) brokerPublicKey).getModulus().toString());
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (InvalidKeySpecException e) {
+                    e.printStackTrace();
+                }
+
+                signature = Signature.getInstance("SHA1WithRSA");
+                signature.initVerify(brokerPublicKey);
+                signature.update(unsignedPart);
+                result = signature.verify(signedHash);
+                System.out.println("Vendor.addNewCommit: verify Broker signature on User certificate result: " + result);
+                if (result) {
                     userCommitments.put(userInfo, commit);
                 }
 
@@ -168,6 +254,7 @@ public class Vendor {
         //TODO: extract userInfo from the commit, if possible
         UserInfo userInfo = new UserInfo();
         userInfo.setIdentity(user.getIdentity());
+        userInfo.setPublicKey(user.getPublicKey());
 
         if (userPayments.get(userInfo) != null) {
             List<Payment> listOfPayments = userPayments.get(userInfo);
