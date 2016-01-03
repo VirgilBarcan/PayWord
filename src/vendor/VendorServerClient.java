@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 /**
  * Created by virgil on 31.12.2015.
@@ -119,37 +120,100 @@ public class VendorServerClient {
 
         private void processCommand(int commandID, DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
             System.out.println("VendorServerClient.ConnectionRunnable.processCommand: commandID=" + commandID);
+            switch (commandID) {
+                case Constants.CommunicationProtocol.GET_IDENTITY:
+                    sendVendorIdentity(dataOutputStream);
+                    break;
+
+                case Constants.CommunicationProtocol.COMMIT:
+                    handleReceiveCommit(dataInputStream, dataOutputStream);
+                    break;
+
+                case Constants.CommunicationProtocol.MAKE_PAYMENT:
+                    handleMakePayment(dataInputStream, dataOutputStream);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void sendVendorIdentity(DataOutputStream dataOutputStream) {
+            System.out.println("ConnectionRunnable.sendVendorIdentity");
+
             try {
-                switch (commandID) {
-                    case Constants.CommunicationProtocol.GET_IDENTITY:
-                        //send the identity length
-                        dataOutputStream.writeInt(vendor.getIdentity().length);
+                //send the identity length
+                dataOutputStream.writeInt(vendor.getIdentity().length);
 
-                        //send the identity
-                        dataOutputStream.write(vendor.getIdentity());
+                //send the identity
+                dataOutputStream.write(vendor.getIdentity());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
-                        break;
+        private void handleReceiveCommit(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+            System.out.println("ConnectionRunnable.handleReceiveCommit");
 
-                    case Constants.CommunicationProtocol.MAKE_PAYMENT:
-                        //TODO: Handle the payment
+            try {
+                //get commit length
+                int commitLength = dataInputStream.readInt();
+                System.out.println("ConnectionRunnable.handleReceiveCommit: commitLength=" + commitLength);
+                //get commit bytes
+                byte[] bytes = new byte[commitLength];
+                dataInputStream.read(bytes);
+                System.out.println("ConnectionRunnable.handleReceiveCommit: commitBytes=" + Arrays.toString(bytes));
+                //TODO: Process the commit
 
-                        //Proof of concept: will use some result that depends on the result of the action
-                        if (true) {
-                            dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
-                        }
-                        else {
-                            dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
-                        }
-
-                        break;
-
-                    default:
-                        break;
+                //Proof of concept: just send the confirmation
+                if (true) {
+                    dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
+                    System.out.println("ConnectionRunnable.handleReceiveCommit: response=OK(1)");
+                } else {
+                    dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
+                    System.out.println("ConnectionRunnable.handleReceiveCommit: response=NOK(0)");
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        private void handleMakePayment(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+            System.out.println("ConnectionRunnable.handleMakePayment");
+
+            /*
+                //send MAKE_PAYMENT command
+                this.vendorDataOutputStream.writeInt(Constants.CommunicationProtocol.MAKE_PAYMENT);
+
+                //send payment length
+                this.vendorDataOutputStream.writeInt(payment.getBytes().length);
+
+                //send payment bytes
+                this.vendorDataOutputStream.write(payment.getBytes());
+
+                //wait for confirmation
+                int response = this.vendorDataInputStream.readInt();
+             */
+
+            try {
+                int paymentLength = dataInputStream.readInt();
+
+                byte[] paymentBytes = new byte[paymentLength];
+                dataInputStream.read(paymentBytes);
+
+                //TODO: Process the payment
+
+                //Proof of concept: just send the confirmation
+                if (true) {
+                    dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
+                } else {
+                    dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 }

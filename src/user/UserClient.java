@@ -2,6 +2,7 @@ package user;
 
 import backend.Account;
 import backend.Commit;
+import backend.Payment;
 import broker.Bank;
 import broker.BrokerServer;
 import utils.Constants;
@@ -172,40 +173,38 @@ public class UserClient {
     public boolean makePaymentToVendor() {
         System.out.println("UserClient.makePaymentToVendor");
         try {
+            int paymentNo;
+
+            VendorInfo vendorInfo = new VendorInfo();
+            vendorInfo.setIdentity(vendorIdentity);
+
+            if (user.isFirstPayment(vendorInfo)) {
+                paymentNo = 0;
+
+                //generate the new hash chain for this vendor
+                user.generateNewHashChain(vendorInfo);
+
+                //compute the commit(V)
+                Commit commit = user.computeCommitment(vendorInfo);
+
+                //send the commit to the vendor
+                boolean sendCommitResponse;
+                do {
+                    sendCommitResponse = sendCommit(commit);
+                }while(!sendCommitResponse);
+                System.out.println("UserClient.makePaymentToVendor: sendCommit finished with success!");
+            }
+            else {
+                paymentNo = user.getVendorNoOfPayments(vendorInfo);
+            }
+
+            //send make payment command and wait for confirmation
             int response;
-
-            //send make payment command + all info required and wait for confirmation
             do {
-                //send MAKE_PAYMENT command
-                this.vendorDataOutputStream.writeInt(Constants.CommunicationProtocol.MAKE_PAYMENT);
-
-                int paymentNo;
-
-                VendorInfo vendorInfo = new VendorInfo();
-                vendorInfo.setIdentity(vendorIdentity);
-
-                if (user.isFirstPayment(vendorInfo)) {
-                    paymentNo = 0;
-
-                    //generate the new hash chain for this vendor
-                    user.generateNewHashChain(vendorInfo);
-
-                    //compute the commit(V)
-                    Commit commit = user.computeCommitment(vendorInfo);
-
-                    //TODO: send the commit to the vendor
-                    //user.sendCommit(vendor, commit);
-                }
-                else {
-                    paymentNo = user.getVendorNoOfPayments(vendorInfo);
-                }
-
-                //TODO: send the payment to the vendor
-                //use the implementation from User, but edit it slightly; generate the payment in User and send it here
-                //user.makePayment(vendor, paymentNo);
-
-                //wait for confirmation
-                response = this.vendorDataInputStream.readInt();
+                //construct and send the payment to the vendor
+                //construct the Payment
+                Payment payment = user.constructPayment(vendorInfo, paymentNo);
+                response = sendPayment(payment);
             }while(response == Constants.CommunicationProtocol.NOK);
 
             System.out.println("UserClient.makePaymentToVendor: payment DONE");
@@ -216,6 +215,48 @@ public class UserClient {
         }
 
         return true;
+    }
+
+    private boolean sendCommit(Commit commit) throws IOException {
+        System.out.println("UserClient.sendCommit");
+
+        //send COMMIT command to Vendor
+        this.vendorDataOutputStream.writeInt(Constants.CommunicationProtocol.COMMIT);
+
+        //send commit length
+        this.vendorDataOutputStream.writeInt(commit.getBytes().length);
+        System.out.println("UserClient.sendCommit: commitLength=" + commit.getBytes().length);
+
+        //send commit bytes
+        this.vendorDataOutputStream.write(commit.getBytes());
+        System.out.println("UserClient.sendCommit: commitBytes=" + Arrays.toString(commit.getBytes()));
+
+        //wait for confirmation
+        int response = this.vendorDataInputStream.readInt();
+        System.out.println("UserClient.sendCommit: response=" + response);
+
+        if (response == Constants.CommunicationProtocol.OK)
+            return true;
+
+        return false;
+    }
+
+    private int sendPayment(Payment payment) throws IOException {
+        System.out.println("UserClient.sendPayment");
+
+        //send MAKE_PAYMENT command
+        this.vendorDataOutputStream.writeInt(Constants.CommunicationProtocol.MAKE_PAYMENT);
+
+        //send payment length
+        this.vendorDataOutputStream.writeInt(payment.getBytes().length);
+
+        //send payment bytes
+        this.vendorDataOutputStream.write(payment.getBytes());
+
+        //wait for confirmation
+        int response = this.vendorDataInputStream.readInt();
+
+        return response;
     }
     //endregion
 

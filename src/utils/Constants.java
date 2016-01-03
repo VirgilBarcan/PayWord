@@ -16,9 +16,10 @@ public class Constants {
         public static final int END_COMMUNICATION = -1;
         public static final int OK = 1;
         public static final int NOK = 0;
-        public static final int REGISTER_TO_BROKER = 11;
+        public static final int REGISTER_TO_BROKER = 2;
         public static final int GET_IDENTITY = 111;
         public static final int MAKE_PAYMENT = 1111;
+        public static final int COMMIT = 11111;
     }
 
 }

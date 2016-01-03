@@ -438,6 +438,35 @@ public class User {
         }
     }
 
+    public Payment constructPayment(VendorInfo vendorInfo, int paymentNo) {
+        byte[] bytes = new byte[24];
+
+        System.out.println("User.constructPayment: paymentNo=" + paymentNo);
+
+        int index = 0;
+
+        //copy the paymentNo-th payword
+        List<List<Payword>> allHashChains = hashChains.get(vendorInfo);
+        List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
+        byte[] ci = lastHashChainComputed.get(this.hashChainLength - paymentNo - 1).getBytes();
+        for (int i = 0; i < ci.length; ++i, ++index) {
+            bytes[index] = ci[i];
+        }
+
+        System.out.println("User.constructPayment: " + Arrays.toString(ci));
+
+        //copy the bytes of paymentNo
+        byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
+        for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
+            bytes[index] = paymentNoBytes[i];
+        }
+
+        //Send payment to Vendor
+        Payment payment = new Payment(bytes);
+
+        return payment;
+    }
+
     public int getVendorNoOfPayments(VendorInfo vendorInfo) {
         return paymentsDone.get(vendorInfo).size();
     }
