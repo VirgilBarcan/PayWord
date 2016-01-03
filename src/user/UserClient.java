@@ -201,6 +201,7 @@ public class UserClient {
                 }
 
                 //TODO: send the payment to the vendor
+                //use the implementation from User, but edit it slightly; generate the payment in User and send it here
                 //user.makePayment(vendor, paymentNo);
 
                 //wait for confirmation
