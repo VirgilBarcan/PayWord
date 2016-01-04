@@ -73,6 +73,15 @@ public class VendorServerClient {
         VendorServerClient vendorServerClient = new VendorServerClient(port);
         vendorServerClient.setVendor(vendor);
         vendorServerClient.initServer();
+
+
+        try {
+            Thread.sleep(10000);
+
+            System.out.println("VendorServerClient.main: sleep finished!");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -105,9 +114,6 @@ public class VendorServerClient {
 
                     //TODO: Do here all things that the client asked
                     processCommand(commandID, dataInputStream, dataOutputStream);
-
-                    //TODO: Send data response to client
-                    dataOutputStream.writeInt(commandID);
                 }
 
                 System.out.println("VendorServerClient.ConnectionRunnable.run: Communication with the User ended!");
@@ -172,7 +178,7 @@ public class VendorServerClient {
                 dataInputStream.read(bytes);
                 Commit commit = new Commit(bytes);
 
-                //TODO: Process the commit
+                //Process the commit
                 //get userInfo from the commit
                 UserInfo userInfo = commit.getUserInfoFromCommit();
                 System.out.println("ConnectionRunnable.handleReceiveCommit: userInfo=" + userInfo);
@@ -228,6 +234,10 @@ public class VendorServerClient {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        private void redeem() {
+
         }
 
     }

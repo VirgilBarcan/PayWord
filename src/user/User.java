@@ -423,19 +423,23 @@ public class User {
         boolean addPaymentResult = vendor.addNewPayment(this, payment);
 
         if (addPaymentResult) {
-            List<Payment> paymentList;
-            if (paymentsDone.get(vendorInfo) != null)
-                paymentList = paymentsDone.get(vendorInfo);
-            else
-                paymentList = new ArrayList<>();
-
-            paymentList.add(payment);
-            paymentsDone.remove(vendorInfo);
-            paymentsDone.put(vendorInfo, paymentList);
+            addPaymentToListOfPayments(vendorInfo, payment);
         }
         else {
             //TODO: redo all steps: generate commit, make new payment, as the payment was corrupted
         }
+    }
+
+    public void addPaymentToListOfPayments(VendorInfo vendorInfo, Payment payment) {
+        List<Payment> paymentList;
+        if (paymentsDone.get(vendorInfo) != null)
+            paymentList = paymentsDone.get(vendorInfo);
+        else
+            paymentList = new ArrayList<>();
+
+        paymentList.add(payment);
+        paymentsDone.remove(vendorInfo);
+        paymentsDone.put(vendorInfo, paymentList);
     }
 
     public Payment constructPayment(VendorInfo vendorInfo, int paymentNo) {

@@ -205,6 +205,11 @@ public class UserClient {
                 //construct the Payment
                 Payment payment = user.constructPayment(vendorInfo, paymentNo);
                 response = sendPayment(payment);
+
+                if (response == Constants.CommunicationProtocol.OK) {
+                    user.addPaymentToListOfPayments(vendorInfo, payment);
+                }
+
             }while(response == Constants.CommunicationProtocol.NOK);
 
             System.out.println("UserClient.makePaymentToVendor: payment DONE");
@@ -298,10 +303,19 @@ public class UserClient {
 
 
         //communicate with a Vendor; the Vendor will be given by its port
-        //TODO: Get the Vendor by asking the user
+        //TODO: Get the Vendor by asking the user on the Console
         int vendorPort = 2001;
         userClient.connectToVendor(Constants.LOCALHOST, vendorPort);
         userClient.getVendorIdentity();
+        userClient.makePaymentToVendor();
+        userClient.makePaymentToVendor();
+        userClient.makePaymentToVendor();
+        userClient.endCommunicationWithVendor();
+
+        userClient.connectToVendor(Constants.LOCALHOST, vendorPort);
+        //userClient.getVendorIdentity();
+        userClient.makePaymentToVendor();
+        userClient.makePaymentToVendor();
         userClient.makePaymentToVendor();
         userClient.endCommunicationWithVendor();
     }
