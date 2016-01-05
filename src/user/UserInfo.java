@@ -60,7 +60,7 @@ public class UserInfo {
         UserInfo userInfo = (UserInfo) o;
 
         if (accountNumber != userInfo.accountNumber) return false;
-        if (publicKey != null ? !publicKey.equals(userInfo.publicKey) : userInfo.publicKey != null) return false;
+        //if (publicKey != null ? !publicKey.equals(userInfo.publicKey) : userInfo.publicKey != null) return false;
         return Arrays.equals(identity, userInfo.identity);
 
     }

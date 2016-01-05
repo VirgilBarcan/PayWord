@@ -20,6 +20,7 @@ public class Constants {
         public static final int GET_IDENTITY = 111;
         public static final int MAKE_PAYMENT = 1111;
         public static final int COMMIT = 11111;
+        public static final int REDEEM = 111111;
     }
 
 }

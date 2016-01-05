@@ -2,6 +2,7 @@ package vendor;
 
 import backend.Account;
 import backend.Commit;
+import backend.Payment;
 import broker.Bank;
 import broker.Broker;
 import user.UserInfo;
@@ -36,6 +37,8 @@ public class VendorServerClient {
 
             while (true) {
                 Socket connection = serverSocket.accept();
+                System.out.println("VendorServerClient.initServer: userAddress=" + connection.getInetAddress());
+                System.out.println("VendorServerClient.initServer: userPort=" + connection.getPort());
                 Runnable runnable = new ConnectionRunnable(connection, ++connectionsCount);
                 Thread thread = new Thread(runnable);
                 thread.start();
@@ -98,6 +101,7 @@ public class VendorServerClient {
         }
 
         public void setUserInfo(UserInfo userInfo) {
+            System.out.println("ConnectionRunnable.setUserInfo");
             this.userInfo = userInfo;
         }
 
@@ -176,6 +180,7 @@ public class VendorServerClient {
                 //get commit bytes
                 byte[] bytes = new byte[commitLength];
                 dataInputStream.read(bytes);
+                System.out.println("ConnectionRunnable.handleReceiveCommit: commitBytes=" + Arrays.toString(bytes));
                 Commit commit = new Commit(bytes);
 
                 //Process the commit
@@ -203,30 +208,21 @@ public class VendorServerClient {
         private void handleMakePayment(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
             System.out.println("ConnectionRunnable.handleMakePayment");
 
-            /*
-                //send MAKE_PAYMENT command
-                this.vendorDataOutputStream.writeInt(Constants.CommunicationProtocol.MAKE_PAYMENT);
-
-                //send payment length
-                this.vendorDataOutputStream.writeInt(payment.getBytes().length);
-
-                //send payment bytes
-                this.vendorDataOutputStream.write(payment.getBytes());
-
-                //wait for confirmation
-                int response = this.vendorDataInputStream.readInt();
-             */
-
             try {
                 int paymentLength = dataInputStream.readInt();
 
                 byte[] paymentBytes = new byte[paymentLength];
                 dataInputStream.read(paymentBytes);
+                Payment payment = new Payment(paymentBytes);
 
-                //TODO: Process the payment
+                //Process the payment
+                System.out.println("ConnectionRunnable.handleMakePayment: userInfo=" + userInfo);
+
+                //add the payment to the vendor
+                boolean result = vendor.addNewPayment(userInfo, payment);
 
                 //Proof of concept: just send the confirmation
-                if (true) {
+                if (result) {
                     dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
                 } else {
                     dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
@@ -236,7 +232,7 @@ public class VendorServerClient {
             }
         }
 
-        private void redeem() {
+        private void redeem(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
 
         }
 

@@ -5,6 +5,7 @@ import utils.Constants;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 /**
  * Created by virgil on 31.12.2015.
@@ -54,9 +55,6 @@ public class BrokerServer implements Runnable {
 
                 //TODO: Do here all things involving the Broker depending on what the client asked
                 processCommand(commandID, dataInputStream, dataOutputStream);
-
-                //TODO: Send data response to client
-                dataOutputStream.writeInt(commandID);
             }
 
             System.out.println("BrokerServer.run: Communication with the User ended!");
@@ -82,6 +80,10 @@ public class BrokerServer implements Runnable {
                 registerToBroker(dataInputStream, dataOutputStream);
                 break;
 
+            case Constants.CommunicationProtocol.REDEEM:
+                redeem(dataInputStream, dataOutputStream);
+                break;
+
             default:
                 break;
         }
@@ -100,21 +102,52 @@ public class BrokerServer implements Runnable {
             boolean resultOfRegister = broker.registerNewUser(userPersonalInfo);
 
             if (resultOfRegister) {
+                System.out.println("BrokerServer.registerToBroker: send OK");
+                dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
+
+                byte[] userCertificate = broker.getUserCertificate(broker.getUserIdentityFromPersonalInfo(userPersonalInfo));
+                System.out.println("BrokerServer.registerToBroker: userCertificate=" + Arrays.toString(userCertificate));
+                //send the user certificate length
+                dataOutputStream.writeInt(userCertificate.length);
+
+                //send the user certificate
+                dataOutputStream.write(userCertificate);
+            } else {
+                System.out.println("BrokerServer.registerToBroker: send NOK");
+                dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean redeem(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
+        try {
+            //wait for redeem message length
+            int lengthOfRedeemMessage = dataInputStream.readInt();
+
+            //wait for redeem message bytes
+            byte[] redeemMessageBytes = new byte[lengthOfRedeemMessage];
+            dataInputStream.read(redeemMessageBytes);
+
+            //TODO: Handle the redeem
+
+
+            if (true) {
                 dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
             } else {
                 dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
             }
 
-            byte[] userCertificate = broker.getUserCertificate(broker.getUserIdentityFromPersonalInfo(userPersonalInfo));
-            //send the user certificate length
-            dataOutputStream.writeInt(userCertificate.length);
-
-            //send the user certificate
-            dataOutputStream.write(userCertificate);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+
 
         return true;
     }

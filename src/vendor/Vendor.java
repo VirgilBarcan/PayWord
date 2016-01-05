@@ -289,6 +289,40 @@ public class Vendor {
         return true;
     }
 
+    public boolean addNewPayment(UserInfo userInfo, Payment payment) {
+        if (userPayments.get(userInfo) != null) {
+            List<Payment> listOfPayments = userPayments.get(userInfo);
+
+            //check if payment is authentic: eg: h(ci) = c(i-1)
+            Payword ci = payment.getPayword();
+            Payword ciHash = new Payword(ci);
+            Payword ci_1 = listOfPayments.get(listOfPayments.size() - 1).getPayword();
+            if (ciHash.equals(ci_1)) {
+                System.out.println("Vendor.addNewPayment: authentic payment! => add to the list of payments");
+
+                listOfPayments.add(payment);
+                userPayments.remove(userInfo);
+                userPayments.put(userInfo, listOfPayments);
+            }
+            else {
+                System.out.println("Vendor.addNewPayment: not authentic payment! => don't add to the list of payments");
+
+                //TODO: do something to stop the service and force the user to redo all steps: generate commit and new payment
+                //TODO: redeem what the user paid so far ??
+                return false;
+            }
+        }
+        else {
+            List<Payment> listOfPayments = new ArrayList<>();
+            listOfPayments.add(payment);
+            userPayments.put(userInfo, listOfPayments);
+        }
+
+        System.out.println("Vendor.addNewPayment: paymentNo=" + payment.getPaywordNo());
+
+        return true;
+    }
+
     /**
      * This is the third step in the scheme
      * The Vendor has to send to the Broker a message containing: commit(U), c(l), l, where l is the last index of a payment

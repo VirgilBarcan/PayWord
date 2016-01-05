@@ -162,6 +162,8 @@ public class Broker {
 
         System.out.println("Broker.registerNewUser: userCreditLimit=" + userCreditLimit);
 
+
+        //Handle the same user registering two times; should make sure the public key of the user changes
         //Store all info received from the user in some kind of structure
         UserInfo userInfo = new UserInfo();
         userInfo.setIdentity(userIdentity);
@@ -169,9 +171,16 @@ public class Broker {
         userInfo.setAccountNumber(userAccountNumber);
         userInfo.setCreditLimit(userCreditLimit);
 
-        if (registeredUsers.contains(userInfo))
-            return false;
+        if (registeredUsers.contains(userInfo)) {
+            System.out.println("Broker.registerNewUser: userInfo exists!");
+
+            //update the public key of the existing userInfo
+            int indexOfUserInfo = registeredUsers.indexOf(userInfo);
+            registeredUsers.get(indexOfUserInfo).setPublicKey(userPublicKey);
+            return true;
+        }
         else {
+            System.out.println("Broker.registerNewUser: new userInfo!");
             registeredUsers.add(userInfo);
             return true;
         }

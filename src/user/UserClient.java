@@ -92,6 +92,7 @@ public class UserClient {
 
                 //wait for confirmation
                 response = this.brokerDataInputStream.readInt();
+                System.out.println("UserClient.registerToBroker: response=" + response);
             }while(response == Constants.CommunicationProtocol.NOK);
 
             //get the user certificate length
@@ -101,6 +102,9 @@ public class UserClient {
             byte[] userCertificate = new byte[userCertificateLength];
             this.brokerDataInputStream.read(userCertificate);
             this.user.setUserCertificate(userCertificate);
+            System.out.println("UserClient.registerToBroker: userCertificate=" + Arrays.toString(this.user.getUserCertificate()));
+            System.out.println("UserClient.registerToBroker: userCertificate=" + Arrays.toString(userCertificate));
+            System.out.println("UserClient.registerToBroker: userCertificate=" + Arrays.toString(this.user.getUserCertificate()));
 
             System.out.println("UserClient.registerToBroker: register OK");
 
@@ -186,6 +190,11 @@ public class UserClient {
 
                 //compute the commit(V)
                 Commit commit = user.computeCommitment(vendorInfo);
+                System.out.println("UserClient.makePaymentToVendor: commitBytes=" + Arrays.toString(commit.getBytes()));
+
+                //test
+                UserInfo userInfo = commit.getUserInfoFromCommit();
+                System.out.println("UserClient.makePaymentToVendor: userInfo=" + userInfo);
 
                 //send the commit to the vendor
                 boolean sendCommitResponse;
@@ -309,15 +318,15 @@ public class UserClient {
         userClient.getVendorIdentity();
         userClient.makePaymentToVendor();
         userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
         userClient.endCommunicationWithVendor();
 
-        userClient.connectToVendor(Constants.LOCALHOST, vendorPort);
+        //TODO: If the user wants to make a new payment the same day, the Vendor should be able to handle it
+        //for now it doesn't, it looses the UserInfo that it saves within the object that handles one connection
+        //userClient.connectToVendor(Constants.LOCALHOST, vendorPort);
         //userClient.getVendorIdentity();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
-        userClient.endCommunicationWithVendor();
+        //userClient.makePaymentToVendor();
+        //userClient.makePaymentToVendor();
+        //userClient.endCommunicationWithVendor();
     }
 
 }
