@@ -34,7 +34,9 @@ public class Bank {
         for (Account account : accounts) {
             if (account.getAccountNumber() == accountNo) {
                 double oldBalance = account.getAccountBalance();
+                System.out.println("Bank.takeMoneyFromAccount: accountNo=" + accountNo + " oldBalance=" + oldBalance);
                 account.setAccountBalance(oldBalance - sumToTake);
+                System.out.println("Bank.takeMoneyFromAccount: accountNo=" + accountNo + " newBalance=" + account.getAccountBalance());
             }
         }
     }
@@ -43,7 +45,9 @@ public class Bank {
         for (Account account : accounts) {
             if (account.getAccountNumber() == accountNo) {
                 double oldBalance = account.getAccountBalance();
+                System.out.println("Bank.addMoneyToAccount: accountNo=" + accountNo + " oldBalance=" + oldBalance);
                 account.setAccountBalance(oldBalance + sumToAdd);
+                System.out.println("Bank.addMoneyToAccount: accountNo=" + accountNo + " newBalance=" + account.getAccountBalance());
             }
         }
     }

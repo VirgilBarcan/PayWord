@@ -5,6 +5,7 @@ import backend.Commit;
 import backend.Payment;
 import broker.Bank;
 import broker.Broker;
+import broker.BrokerServer;
 import user.UserInfo;
 import utils.Constants;
 
@@ -25,10 +26,21 @@ public class VendorServerClient {
     private int port;
     private Vendor vendor;
 
+    private String brokerHostname;
+    private int brokerPort;
+    private Socket brokerConnection;
+    private DataInputStream brokerDataInputStream;
+    private DataOutputStream brokerDataOutputStream;
+
     public VendorServerClient(int port) {
         this.port = port;
     }
 
+    public void setVendor(Vendor vendor) {
+        this.vendor = vendor;
+    }
+
+    //region Server part
     public void initServer() {
         int connectionsCount = 0;
 
@@ -47,13 +59,84 @@ public class VendorServerClient {
             e.printStackTrace();
         }
     }
+    //endregion
 
-    public void setVendor(Vendor vendor) {
-        this.vendor = vendor;
+    //region Client part
+    public boolean connectToBroker(String brokerHostname, int brokerPort) {
+        System.out.println("VendorServerClient.connectToBroker");
+        try {
+            this.brokerHostname = brokerHostname;
+            this.brokerPort = brokerPort;
+
+            InetAddress brokerAddress = InetAddress.getByName(this.brokerHostname);
+            this.brokerConnection = new Socket(brokerAddress, this.brokerPort);
+
+            this.brokerDataInputStream = new DataInputStream(brokerConnection.getInputStream());
+            this.brokerDataOutputStream = new DataOutputStream(brokerConnection.getOutputStream());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
+
+    public boolean endCommunicationWithBroker() {
+        System.out.println("VendorServerClient.endCommunicationWithBroker");
+        try {
+            this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.END_COMMUNICATION);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean redeem() {
+        System.out.println("VendorServerClient.redeem");
+
+        byte[] redeemMessage = vendor.redeem2();
+
+        try {
+            //send REDEEM command
+            this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.REDEEM);
+
+            //send redeem message length
+            this.brokerDataOutputStream.writeInt(redeemMessage.length);
+
+            //send redeem message
+            this.brokerDataOutputStream.write(redeemMessage);
+
+            //wait for confirmation
+            int response = this.brokerDataInputStream.readInt();
+
+            if (response == Constants.CommunicationProtocol.OK) {
+                System.out.println("VendorServerClient.redeem: redeem OK");
+                return true;
+            }
+            else {
+                System.out.println("VendorServerClient.redeem: redeem NOK");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return false;
+    }
+    //endregion
+
 
     public static void main(String[] args) {
         Bank bank = Bank.getInstance();
+
+        long startTime = System.currentTimeMillis();
 
         //TODO: Get all this info from args or ask user via Console
         String vendorIdentity = "vendor1@gmail.com";
@@ -73,18 +156,38 @@ public class VendorServerClient {
         Vendor vendor = new Vendor(vendorIdentity);
         vendor.setAccount(vendorAccount);
 
+
+        System.out.println("VendorServerClient.main: vendor accountBalance=" + Bank.getInstance().getAccountBalance(vendor.getAccount().getAccountNumber()));
+
         VendorServerClient vendorServerClient = new VendorServerClient(port);
+        //Proof of Concept:
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("VendorServerClient.run: startTime=" + startTime + " currentTime=" + System.currentTimeMillis());
+
+                do {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } while (System.currentTimeMillis() - startTime < 15000);
+
+                vendorServerClient.connectToBroker(Constants.LOCALHOST, BrokerServer.PORT);
+                vendorServerClient.redeem();
+                vendorServerClient.endCommunicationWithBroker();
+                System.out.println("VendorServerClient.main: vendor accountBalance=" + Bank.getInstance().getAccountBalance(vendor.getAccount().getAccountNumber()));
+            }
+        });
+        thread.start();
+
+        System.out.println("VendorServerClient.main: outside the thread!");
+
         vendorServerClient.setVendor(vendor);
         vendorServerClient.initServer();
 
-
-        try {
-            Thread.sleep(10000);
-
-            System.out.println("VendorServerClient.main: sleep finished!");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
 
@@ -121,7 +224,6 @@ public class VendorServerClient {
                 }
 
                 System.out.println("VendorServerClient.ConnectionRunnable.run: Communication with the User ended!");
-
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -232,9 +334,6 @@ public class VendorServerClient {
             }
         }
 
-        private void redeem(DataInputStream dataInputStream, DataOutputStream dataOutputStream) {
-
-        }
 
     }
 

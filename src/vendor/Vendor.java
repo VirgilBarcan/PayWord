@@ -360,4 +360,33 @@ public class Vendor {
 
         return true;
     }
+
+    public byte[] redeem2() {
+        byte[] message = null;
+
+        //redeem all payments done by all users
+        for (UserInfo userInfo : userCommitments.keySet()) {
+
+            List<Payment> paymentList = userPayments.get(userInfo);
+            int size = userCommitments.get(userInfo).getBytes().length + paymentList.get(paymentList.size() - 1).getBytes().length;
+            message = new byte[size];
+
+            int index = 0;
+
+            //copy the commit
+            byte[] commitBytes = userCommitments.get(userInfo).getBytes();
+            for (int i = 0; i < commitBytes.length; ++i, ++index)
+                message[index] = commitBytes[i];
+
+            //copy the last payword received and its index
+            byte[] lastPaywordBytes = paymentList.get(paymentList.size() - 1).getBytes();
+
+            for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
+                message[index] = lastPaywordBytes[i];
+
+            System.out.println("Vendor.redeem: lastPaywordBytes=" + Arrays.toString(lastPaywordBytes));
+        }
+
+        return message;
+    }
 }

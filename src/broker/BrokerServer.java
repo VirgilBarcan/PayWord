@@ -1,6 +1,7 @@
 package broker;
 
 import utils.Constants;
+import vendor.VendorInfo;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -135,9 +136,12 @@ public class BrokerServer implements Runnable {
             dataInputStream.read(redeemMessageBytes);
 
             //TODO: Handle the redeem
+            System.out.println("BrokerServer.redeem: redeemMessage=" + Arrays.toString(redeemMessageBytes));
+            VendorInfo vendorInfo = new VendorInfo();
+            vendorInfo.setAccountNumber(3);
+            boolean resultOfRedeem = broker.redeem(vendorInfo, redeemMessageBytes);
 
-
-            if (true) {
+            if (resultOfRedeem) {
                 dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
             } else {
                 dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
