@@ -9,6 +9,7 @@ import user.User;
 import user.UserInfo;
 import utils.*;
 
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -97,6 +98,60 @@ public class Vendor {
     }
 
     /**
+     * Get the array of byte that represents the info of the vendor
+     * The format of the array is:
+     *  - 4 bytes for the length of the identity
+     *  - the identity bytes
+     *  - 4 bytes for the length of the public key encoded value
+     *  - the public key encoded value
+     *  - 8 bytes for the account number
+     * @return the array of bytes that represents the info of the vendor
+     */
+    public byte[] getVendorInfo() {
+        int size = Constants.INT_NO_OF_BYTES + identity.length + Constants.INT_NO_OF_BYTES + publicKey.getEncoded().length + 2 * Constants.LONG_NO_OF_BYTES;
+        byte[] vendorInfo = new byte[size];
+
+        int index = 0;
+
+        System.out.println("Vendor.getVendorInfo: lengthOfIdentity=" + identity.length);
+        //copy identity length
+        byte[] lengthOfIdentity = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(identity.length).array();
+        for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
+            vendorInfo[index] = lengthOfIdentity[i];
+        }
+
+        //copy identity
+        for (int i = 0; i < identity.length; ++i, ++index) {
+            vendorInfo[index] = identity[i];
+        }
+
+        byte[] publicKeyEncoded = publicKey.getEncoded();
+
+
+        System.out.println("Vendor.getVendorInfo: publicKeyLength=" + publicKeyEncoded.length);
+        //copy publicKey length
+        byte[] lengthOfPublicKey = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(publicKeyEncoded.length).array();
+        for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
+            vendorInfo[index] = lengthOfPublicKey[i];
+        }
+
+        System.out.println("Vendor.getVendorInfo: vendorPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
+        //copy publicKey
+        for (int i = 0; i < publicKeyEncoded.length; ++i, ++index) {
+            vendorInfo[index] = publicKeyEncoded[i];
+        }
+
+        System.out.println("Vendor.getVendorInfo: accountNumber=" + getAccount().getAccountNumber());
+        //copy account number
+        byte[] accountNumberBytes = ByteBuffer.allocate(Constants.LONG_NO_OF_BYTES).putLong(getAccount().getAccountNumber()).array();
+        for (int i = 0; i < Constants.LONG_NO_OF_BYTES; ++i, ++index) {
+            vendorInfo[index] = accountNumberBytes[i];
+        }
+
+        return vendorInfo;
+    }
+
+    /**
      * Add a new commit from a user
      * @param commit
      * @return
@@ -170,7 +225,8 @@ public class Vendor {
 
     /**
      * Add a new commit from a user
-     * @param commit
+     * @param userInfo information about the user
+     * @param commit the commit
      * @return
      */
     public boolean addNewCommit(UserInfo userInfo, Commit commit) {

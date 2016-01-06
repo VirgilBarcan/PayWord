@@ -164,7 +164,7 @@ public class User {
 
         int index = 0;
 
-        System.out.println("User.getPersonalInfo: lengthOfIdentity=" + identity.length);
+        System.out.println("User.getVendorInfo: lengthOfIdentity=" + identity.length);
         //copy identity length
         byte[] lengthOfIdentity = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(identity.length).array();
         for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
@@ -179,27 +179,27 @@ public class User {
         byte[] publicKeyEncoded = publicKey.getEncoded();
 
 
-        System.out.println("User.getPersonalInfo: publicKeyLength=" + publicKeyEncoded.length);
+        System.out.println("User.getVendorInfo: publicKeyLength=" + publicKeyEncoded.length);
         //copy publicKey length
         byte[] lengthOfPublicKey = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(publicKeyEncoded.length).array();
         for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
             personalInfo[index] = lengthOfPublicKey[i];
         }
 
-        System.out.println("User.getPersonalInfo: userPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
+        System.out.println("User.getVendorInfo: userPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
         //copy publicKey
         for (int i = 0; i < publicKeyEncoded.length; ++i, ++index) {
             personalInfo[index] = publicKeyEncoded[i];
         }
 
-        System.out.println("User.getPersonalInfo: accountNumber=" + getAccount().getAccountNumber());
+        System.out.println("User.getVendorInfo: accountNumber=" + getAccount().getAccountNumber());
         //copy account number
         byte[] accountNumberBytes = ByteBuffer.allocate(Constants.LONG_NO_OF_BYTES).putLong(getAccount().getAccountNumber()).array();
         for (int i = 0; i < Constants.LONG_NO_OF_BYTES; ++i, ++index) {
             personalInfo[index] = accountNumberBytes[i];
         }
 
-        System.out.println("User.getPersonalInfo: creditLimit=" + creditLimit);
+        System.out.println("User.getVendorInfo: creditLimit=" + creditLimit);
         //copy credit limit
         byte[] creditLimitBytes = ByteBuffer.allocate(Constants.LONG_NO_OF_BYTES).putLong(creditLimit).array();
         for (int i = 0; i < Constants.LONG_NO_OF_BYTES; ++i, ++index) {

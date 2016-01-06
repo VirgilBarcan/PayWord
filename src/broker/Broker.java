@@ -88,7 +88,7 @@ public class Broker {
         return this.privateKey;
     }
 
-    public boolean registerNewUser(byte[] personalInfo) {
+    public boolean registerNewUser(byte[] userPersonalInfo) {
         int indexStart = 0;
         int indexEnd = 0;
 
@@ -99,7 +99,7 @@ public class Broker {
 
         //get length of userIdentity
         byte[] lengthOfIdentityBytes = new byte[4];
-        lengthOfIdentityBytes = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
+        lengthOfIdentityBytes = Arrays.copyOfRange(userPersonalInfo, indexStart, indexEnd);
         int lengthOfIdentity = ByteBuffer.wrap(lengthOfIdentityBytes).getInt();
 
         System.out.println("Broker.registerNewUser: lengthOfIdentity=" + lengthOfIdentity);
@@ -109,14 +109,14 @@ public class Broker {
 
         //get userIdentity
         byte[] userIdentity = new byte[lengthOfIdentity];
-        userIdentity = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
+        userIdentity = Arrays.copyOfRange(userPersonalInfo, indexStart, indexEnd);
 
         indexStart = indexEnd;
         indexEnd += 4;
 
         //get length of public key
         byte[] lengthOfPublicKeyBytes = new byte[4];
-        lengthOfPublicKeyBytes = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
+        lengthOfPublicKeyBytes = Arrays.copyOfRange(userPersonalInfo, indexStart, indexEnd);
         int lengthOfPublicKey = ByteBuffer.wrap(lengthOfPublicKeyBytes).getInt();
 
         System.out.println("Broker.registerNewUser: lengthOfPublicKey=" + lengthOfPublicKey);
@@ -126,7 +126,7 @@ public class Broker {
 
         //get public key
         byte[] publicKeyBytes = new byte[lengthOfPublicKey];
-        publicKeyBytes = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
+        publicKeyBytes = Arrays.copyOfRange(userPersonalInfo, indexStart, indexEnd);
 
         PublicKey userPublicKey = null;
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
@@ -147,7 +147,7 @@ public class Broker {
 
         //get account number
         byte[] accountNumberBytes = new byte[8];
-        accountNumberBytes = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
+        accountNumberBytes = Arrays.copyOfRange(userPersonalInfo, indexStart, indexEnd);
         long userAccountNumber = ByteBuffer.wrap(accountNumberBytes).getLong();
 
         System.out.println("Broker.registerNewUser: userAccountNumber=" + userAccountNumber);
@@ -157,7 +157,7 @@ public class Broker {
 
         //get credit limit
         byte[] creditLimitBytes = new byte[8];
-        creditLimitBytes = Arrays.copyOfRange(personalInfo, indexStart, indexEnd);
+        creditLimitBytes = Arrays.copyOfRange(userPersonalInfo, indexStart, indexEnd);
         long userCreditLimit = ByteBuffer.wrap(creditLimitBytes).getLong();
 
         System.out.println("Broker.registerNewUser: userCreditLimit=" + userCreditLimit);
@@ -186,6 +186,92 @@ public class Broker {
         }
     }
 
+    public boolean registerNewVendor(byte[] vendorInfoBytes) {
+        int indexStart = 0;
+        int indexEnd = 0;
+
+        //get all info from the array
+
+        indexStart = indexEnd;
+        indexEnd += 4;
+
+        //get length of vendorIdentity
+        byte[] lengthOfIdentityBytes = new byte[4];
+        lengthOfIdentityBytes = Arrays.copyOfRange(vendorInfoBytes, indexStart, indexEnd);
+        int lengthOfIdentity = ByteBuffer.wrap(lengthOfIdentityBytes).getInt();
+
+        System.out.println("Broker.registerNewVendor: lengthOfIdentity=" + lengthOfIdentity);
+
+        indexStart = indexEnd;
+        indexEnd += lengthOfIdentity;
+
+        //get vendorIdentity
+        byte[] vendorIdentity = new byte[lengthOfIdentity];
+        vendorIdentity = Arrays.copyOfRange(vendorInfoBytes, indexStart, indexEnd);
+
+        indexStart = indexEnd;
+        indexEnd += 4;
+
+        //get length of public key
+        byte[] lengthOfPublicKeyBytes = new byte[4];
+        lengthOfPublicKeyBytes = Arrays.copyOfRange(vendorInfoBytes, indexStart, indexEnd);
+        int lengthOfPublicKey = ByteBuffer.wrap(lengthOfPublicKeyBytes).getInt();
+
+        System.out.println("Broker.registerNewVendor: lengthOfPublicKey=" + lengthOfPublicKey);
+
+        indexStart = indexEnd;
+        indexEnd += lengthOfPublicKey;
+
+        //get public key
+        byte[] publicKeyBytes = new byte[lengthOfPublicKey];
+        publicKeyBytes = Arrays.copyOfRange(vendorInfoBytes, indexStart, indexEnd);
+
+        PublicKey vendorPublicKey = null;
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+        KeyFactory keyFactory = null;
+        try {
+            keyFactory = KeyFactory.getInstance("RSA");
+            vendorPublicKey = keyFactory.generatePublic(keySpec);
+
+            System.out.println("Broker.registerNewVendor: vendorPublicKey=" + ((RSAPublicKey) vendorPublicKey).getModulus().toString());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+
+        indexStart = indexEnd;
+        indexEnd += 8;
+
+        //get account number
+        byte[] accountNumberBytes = new byte[8];
+        accountNumberBytes = Arrays.copyOfRange(vendorInfoBytes, indexStart, indexEnd);
+        long vendorAccountNumber = ByteBuffer.wrap(accountNumberBytes).getLong();
+
+        System.out.println("Broker.registerNewVendor: vendorAccountNumber=" + vendorAccountNumber);
+
+        //Handle the same vendor registering two times; should make sure the public key of the user changes
+        //Store all info received from the user in some kind of structure
+        VendorInfo vendorInfo = new VendorInfo();
+        vendorInfo.setIdentity(vendorIdentity);
+        vendorInfo.setPublicKey(vendorPublicKey);
+        vendorInfo.setAccountNumber(vendorAccountNumber);
+
+        if (registeredVendors.contains(vendorInfo)) {
+            System.out.println("Broker.registerNewVendor: vendorInfoBytes exists!");
+
+            //update the public key of the existing vendorInfoBytes
+            int indexOfUserInfo = registeredVendors.indexOf(vendorInfo);
+            registeredVendors.get(indexOfUserInfo).setPublicKey(vendorPublicKey);
+            return true;
+        }
+        else {
+            System.out.println("Broker.registerNewVendor: new vendorInfoBytes!");
+            registeredVendors.add(vendorInfo);
+            return true;
+        }
+    }
+
     /**
      * Get the certificate for the user given by the userIdentity
      * @param userIdentity the identity of the user
@@ -194,8 +280,7 @@ public class Broker {
     public byte[] getUserCertificate(byte[] userIdentity) {
         UserInfo userInfo = getUserWithIdentity(userIdentity);
 
-        int size = this.identity.length +
-                userInfo.getIdentity().length;
+        int size = this.identity.length + userInfo.getIdentity().length;
         size += this.publicKey.getEncoded().length + userInfo.getPublicKey().getEncoded().length;
         size += 8; //the date is stored as 64 bits long value, therefore 8 bytes
         size += 8; //the accountNumber is stored as 64 bits long value, therefore 8 bytes
@@ -286,6 +371,13 @@ public class Broker {
         for (UserInfo userInfo : registeredUsers)
             if (Arrays.equals(userInfo.getIdentity(), userIdentity))
                 return userInfo;
+        return null;
+    }
+
+    private VendorInfo getVendorWithIdentity(byte[] vendorIdentity) {
+        for (VendorInfo vendorInfo : registeredVendors)
+            if (Arrays.equals(vendorInfo.getIdentity(), vendorIdentity))
+                return vendorInfo;
         return null;
     }
 
@@ -396,12 +488,12 @@ public class Broker {
 
     /**
      * This is the third step of the scheme
-     * @param vendorInfo the vendorInfo
      * @param message the message
      * @return true if the action completed with success, false otherwise
      */
-    public boolean redeem(VendorInfo vendorInfo, byte[] message) {
+    public boolean redeem(byte[] message) {
         System.out.println("Broker.redeem with vendorInfo");
+
         //check commit(U)
         //extract commit(U) from the message
         //get the unsigned part
@@ -411,10 +503,14 @@ public class Broker {
         //get the signed hash
         byte[] signedHash = Arrays.copyOfRange(message, size, 1020);
 
+        //get the vendor identity
+        byte[] vendorIdentity = Arrays.copyOfRange(message, 0, 128);
+
         //get the user identity
         byte[] userCertificate = Arrays.copyOfRange(unsignedMessage, 128, 860);
         byte[] userIdentity = Arrays.copyOfRange(userCertificate, 128, 256);
         UserInfo userInfo = getUserWithIdentity(userIdentity);
+        System.out.println("Broker.redeem: userInfo=" + userInfo);
 
         //check User signature on commit(U)
         Signature signature = null;
@@ -475,8 +571,11 @@ public class Broker {
                     //make payment to Vendor and take money from User
                     System.out.println("Broker.redeem: lastPaymentIndex=" + l);
 
+
                     //TODO: Implement Bank as server
-                    //Proof of Concept
+                    //Proof of Concept: take money from the User and add them to the Vendor
+                    VendorInfo vendorInfo = getVendorWithIdentity(vendorIdentity);
+                    System.out.println("Broker.redeem: vendorInfo=" + vendorInfo);
                     bank.takeMoneyFromAccount(userInfo.getAccountNumber(), l + 1);
                     bank.addMoneyToAccount(vendorInfo.getAccountNumber(), l + 1);
                     paymentsRedeemed.add(rootOfPayment);

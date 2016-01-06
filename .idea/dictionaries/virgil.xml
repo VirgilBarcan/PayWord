@@ -2,6 +2,7 @@
   <dictionary name="virgil">
     <words>
       <w>payword</w>
+      <w>paywords</w>
     </words>
   </dictionary>
 </component>

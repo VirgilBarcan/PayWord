@@ -10,17 +10,23 @@ public class Constants {
     public static final int LONG_NO_OF_BYTES = 8;
     public static final int INT_NO_OF_BYTES = 4;
 
+    public static final int IDENTITY_LENGTH = 128;
+    public static final int HASH_LENGTH = 20;
+    public static final int UNSIGNED_COMMIT_LENGTH = 892;
+    public static final int SIGNED_COMMIT_LENGTH = 1020;
+
     public static final String LOCALHOST = "localhost";
 
     public static class CommunicationProtocol {
         public static final int END_COMMUNICATION = -1;
         public static final int OK = 1;
         public static final int NOK = 0;
-        public static final int REGISTER_TO_BROKER = 11;
-        public static final int GET_IDENTITY = 111;
-        public static final int MAKE_PAYMENT = 1111;
-        public static final int COMMIT = 11111;
-        public static final int REDEEM = 111111;
+        public static final int USER_REGISTER_TO_BROKER = 11;
+        public static final int VENDOR_REGISTER_TO_BROKER = 111;
+        public static final int GET_IDENTITY = 1111;
+        public static final int MAKE_PAYMENT = 11111;
+        public static final int COMMIT = 111111;
+        public static final int REDEEM = 1111111;
     }
 
 }

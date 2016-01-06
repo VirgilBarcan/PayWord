@@ -79,8 +79,8 @@ public class UserClient {
 
             //send register command + all info required and wait for confirmation
             do {
-                //send REGISTER_TO_BROKER command
-                this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.REGISTER_TO_BROKER);
+                //send USER_REGISTER_TO_BROKER command
+                this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.USER_REGISTER_TO_BROKER);
 
                 byte[] personalInfo = this.user.getPersonalInfo(creditLimit);
                 //send length of personal info message
@@ -316,6 +316,10 @@ public class UserClient {
         int vendorPort = 2001;
         userClient.connectToVendor(Constants.LOCALHOST, vendorPort);
         userClient.getVendorIdentity();
+        userClient.makePaymentToVendor();
+        userClient.makePaymentToVendor();
+        userClient.makePaymentToVendor();
+        userClient.makePaymentToVendor();
         userClient.makePaymentToVendor();
         userClient.makePaymentToVendor();
         userClient.endCommunicationWithVendor();

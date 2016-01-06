@@ -97,6 +97,39 @@ public class VendorServerClient {
         return true;
     }
 
+    public boolean registerToBroker() {
+        System.out.println("VendorServerClient.registerToBroker");
+        try {
+            int response;
+
+            //send register command + all info required and wait for confirmation
+            do {
+                //send VENDOR_REGISTER_TO_BROKER command
+                this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.VENDOR_REGISTER_TO_BROKER);
+
+                byte[] vendorInfo = this.vendor.getVendorInfo();
+                //send length of vendorInfo message
+                int vendorInfoLength = vendorInfo.length;
+                this.brokerDataOutputStream.writeInt(vendorInfoLength);
+
+                //send vendorInfo
+                this.brokerDataOutputStream.write(vendorInfo);
+
+                //wait for confirmation
+                response = this.brokerDataInputStream.readInt();
+                System.out.println("VendorServerClient.registerToBroker: response=" + response);
+            }while(response == Constants.CommunicationProtocol.NOK);
+
+            System.out.println("VendorServerClient.registerToBroker: register OK");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
     private boolean redeem() {
         System.out.println("VendorServerClient.redeem");
 
@@ -166,7 +199,11 @@ public class VendorServerClient {
         System.out.println("VendorServerClient.main: vendor accountBalance=" + Bank.getInstance().getAccountBalance(vendor.getAccount().getAccountNumber()));
 
         VendorServerClient vendorServerClient = new VendorServerClient(port);
-        //Proof of Concept:
+        vendorServerClient.setVendor(vendor);
+
+        //Proof of Concept: show that the client part of VendorServerClient works (it should register to the Broker and redeem the paywords)
+        vendorServerClient.connectToBroker(Constants.LOCALHOST, BrokerServer.PORT);
+        vendorServerClient.registerToBroker();
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -181,7 +218,6 @@ public class VendorServerClient {
                     }
                 } while (System.currentTimeMillis() - startTime < 15000);
 
-                vendorServerClient.connectToBroker(Constants.LOCALHOST, BrokerServer.PORT);
                 vendorServerClient.redeem();
                 vendorServerClient.endCommunicationWithBroker();
                 System.out.println("VendorServerClient.main: vendor accountBalance=" + Bank.getInstance().getAccountBalance(vendor.getAccount().getAccountNumber()));
@@ -191,7 +227,6 @@ public class VendorServerClient {
 
         System.out.println("VendorServerClient.main: outside the thread!");
 
-        vendorServerClient.setVendor(vendor);
         vendorServerClient.initServer();
 
     }

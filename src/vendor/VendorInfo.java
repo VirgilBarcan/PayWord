@@ -66,8 +66,8 @@ public class VendorInfo {
     @Override
     public String toString() {
         return "VendorInfo{" +
-                "publicKey=" + publicKey +
-                ", identity=" + Arrays.toString(identity) +
+                "publicKey=" + publicKey + "\n" +
+                ", identity=" + Arrays.toString(identity) + "\n" +
                 ", accountNumber=" + accountNumber +
                 '}';
     }
