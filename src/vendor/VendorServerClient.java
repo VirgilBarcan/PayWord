@@ -4,7 +4,6 @@ import backend.Account;
 import backend.Commit;
 import backend.Payment;
 import broker.Bank;
-import broker.Broker;
 import broker.BrokerServer;
 import user.UserInfo;
 import utils.Constants;
@@ -101,34 +100,41 @@ public class VendorServerClient {
     private boolean redeem() {
         System.out.println("VendorServerClient.redeem");
 
-        byte[] redeemMessage = vendor.redeem2();
+        boolean result = false;
+        byte[][] redeemMessages = vendor.getRedeemMessages();
+        byte[] redeemMessage = null;
 
         try {
-            //send REDEEM command
-            this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.REDEEM);
+            for (int messageNo = 0; messageNo < redeemMessages.length; ++messageNo) {
+                redeemMessage = redeemMessages[messageNo];
+                System.out.println("VendorServerClient.redeem: messageNo=" + messageNo + " bytes=" + Arrays.toString(redeemMessage));
 
-            //send redeem message length
-            this.brokerDataOutputStream.writeInt(redeemMessage.length);
+                //send REDEEM command
+                this.brokerDataOutputStream.writeInt(Constants.CommunicationProtocol.REDEEM);
 
-            //send redeem message
-            this.brokerDataOutputStream.write(redeemMessage);
+                //send redeem message length
+                this.brokerDataOutputStream.writeInt(redeemMessage.length);
 
-            //wait for confirmation
-            int response = this.brokerDataInputStream.readInt();
+                //send redeem message
+                this.brokerDataOutputStream.write(redeemMessage);
 
-            if (response == Constants.CommunicationProtocol.OK) {
-                System.out.println("VendorServerClient.redeem: redeem OK");
-                return true;
-            }
-            else {
-                System.out.println("VendorServerClient.redeem: redeem NOK");
+                //wait for confirmation
+                int response = this.brokerDataInputStream.readInt();
+
+                if (response == Constants.CommunicationProtocol.OK) {
+                    System.out.println("VendorServerClient.redeem: redeem OK");
+                    result = true;
+                } else {
+                    System.out.println("VendorServerClient.redeem: redeem NOK");
+                    result = false;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
 
-        return false;
+        return result;
     }
     //endregion
 

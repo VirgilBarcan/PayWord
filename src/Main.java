@@ -38,7 +38,7 @@ public class Main {
             user1.payVendor(vendor1);
         }
         user2.payVendor(vendor1);
-        vendor1.redeem();
+        vendor1.redeemOld();
 
         System.out.println("User1 account balance=" + bank.getAccountBalance(user1.getAccount().getAccountNumber()));
         System.out.println("Vendor1 account balance=" + bank.getAccountBalance(vendor1.getAccount().getAccountNumber()));

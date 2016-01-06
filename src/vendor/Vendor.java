@@ -328,7 +328,7 @@ public class Vendor {
      * The Vendor has to send to the Broker a message containing: commit(U), c(l), l, where l is the last index of a payment
      * @return true if the action completed with success, false otherwise
      */
-    public boolean redeem() {
+    public boolean redeemOld() {
 
         //redeem all payments done by all users
         for (UserInfo userInfo : userCommitments.keySet()) {
@@ -350,7 +350,7 @@ public class Vendor {
             for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
                 message[index] = lastPaywordBytes[i];
 
-            System.out.println("Vendor.redeem: lastPaywordBytes=" + Arrays.toString(lastPaywordBytes));
+            System.out.println("Vendor.redeemOld: lastPaywordBytes=" + Arrays.toString(lastPaywordBytes));
 
             //send message to the Broker to redeem the payments
             Broker broker = Broker.getInstance();
@@ -361,8 +361,15 @@ public class Vendor {
         return true;
     }
 
-    public byte[] redeem2() {
+    /**
+     * This is the third step in the scheme
+     * The Vendor has to send to the Broker a message containing: commit(U), c(l), l, where l is the last index of a payment
+     * @return the redeem messages
+     */
+    public byte[][] getRedeemMessages() {
+        byte[][] redeemMessages = new byte[userCommitments.keySet().size()][];
         byte[] message = null;
+        int messageNo = 0;
 
         //redeem all payments done by all users
         for (UserInfo userInfo : userCommitments.keySet()) {
@@ -384,9 +391,11 @@ public class Vendor {
             for (int i = 0; i < lastPaywordBytes.length; ++i, ++index)
                 message[index] = lastPaywordBytes[i];
 
-            System.out.println("Vendor.redeem: lastPaywordBytes=" + Arrays.toString(lastPaywordBytes));
+            System.out.println("Vendor.getRedeemMessages: lastPaywordBytes=" + Arrays.toString(lastPaywordBytes));
+
+            redeemMessages[messageNo++] = message;
         }
 
-        return message;
+        return redeemMessages;
     }
 }
