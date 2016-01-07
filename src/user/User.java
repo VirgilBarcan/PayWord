@@ -102,51 +102,6 @@ public class User {
     }
 
     /**
-     * This is the first step in the scheme, the registration of the User to the Broker
-     * The User sends his personal info to the Broker
-     * The Broker sends the certificate
-     * @param creditLimit the credit limit that the user wants to be imposed
-     * @return true if the action completed with success, false otherwise
-     */
-    public boolean registerToBroker(long creditLimit) {
-        byte[] personalInfo = getPersonalInfo(creditLimit);
-
-        //send personal info to the Broker
-        boolean sendResult = broker.registerNewUser(personalInfo);
-
-        //wait to get the certificate
-        byte[] userCertificate = broker.getUserCertificate(identity);
-        System.out.println("User.registerToBroker: certificate length=" + userCertificate.length);
-
-        //check Broker signature on the certificate
-        //get the unsigned part
-        int size = 604; //the no of bytes of the message without the signed hash
-        byte[] message = Arrays.copyOfRange(userCertificate, 0, size);
-
-        //get the signed hash
-        byte[] signedHash = Arrays.copyOfRange(userCertificate, size, userCertificate.length);
-
-        Signature signature = null;
-        try {
-            signature = Signature.getInstance("SHA1WithRSA");
-            signature.initVerify(broker.getPublicKey());
-            signature.update(message);
-            boolean result = signature.verify(signedHash);
-            System.out.println("User.registerToBroker: verify Broker signature on the certificate result: " + result);
-            if (result)
-                this.userCertificate = userCertificate;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (SignatureException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
-
-        return sendResult;
-    }
-
-    /**
      * Get the array of byte that represents the personal info of the user
      * The format of the array is:
      *  - 4 bytes for the length of the identity
@@ -207,42 +162,6 @@ public class User {
         }
 
         return personalInfo;
-    }
-
-    /**
-     * This is the second step in the scheme
-     *
-     * @param vendor the Vendor that the User wants to pay
-     * @return true if the action completed with success, false otherwise
-     */
-    public boolean payVendor(Vendor vendor) {
-        int paymentNo;
-
-        VendorInfo vendorInfo = new VendorInfo();
-        vendorInfo.setIdentity(vendor.getIdentity());
-
-        if (isFirstPayment(vendorInfo)) {
-            paymentNo = 0;
-
-            //generate the new hash chain for this vendor
-            generateNewHashChain(vendorInfo);
-
-            //compute the commit(V)
-            Commit commit = computeCommitment(vendorInfo);
-
-            //send the commit to the vendor
-            sendCommit(vendor, commit);
-        }
-        else {
-            paymentNo = paymentsDone.get(vendor).size();
-        }
-
-        //send the payment to the vendor
-        makePayment(vendor, paymentNo);
-
-        //makePayment(vendor, paymentNo + 2); //test if the Vendor accepts non-authentic payments; it does not
-
-        return false;
     }
 
     /**
@@ -376,58 +295,6 @@ public class User {
         Commit commit = new Commit(commitBytes);
 
         return commit;
-    }
-
-    /**
-     * Send the commit to the Vendor
-     * @param vendor the Vendor
-     * @param commit the commit
-     */
-    public void sendCommit(Vendor vendor, Commit commit) {
-        vendor.addNewCommit(this, commit);
-    }
-
-    /**
-     * Make a new payment to the vendor
-     * @param vendor the Vendor
-     * @param paymentNo the index of the payment
-     */
-    public void makePayment(Vendor vendor, int paymentNo) {
-        byte[] bytes = new byte[24];
-
-        System.out.println("User.makePayment: paymentNo=" + paymentNo);
-
-        VendorInfo vendorInfo = new VendorInfo();
-        vendorInfo.setIdentity(vendor.getIdentity());
-
-        int index = 0;
-
-        //copy the paymentNo-th payword
-        List<List<Payword>> allHashChains = hashChains.get(vendorInfo);
-        List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
-        byte[] ci = lastHashChainComputed.get(this.hashChainLength - paymentNo - 1).getBytes();
-        for (int i = 0; i < ci.length; ++i, ++index) {
-            bytes[index] = ci[i];
-        }
-
-        System.out.println("User.makePayment: " + Arrays.toString(ci));
-
-        //copy the bytes of paymentNo
-        byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
-        for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
-            bytes[index] = paymentNoBytes[i];
-        }
-
-        //Send payment to Vendor
-        Payment payment = new Payment(bytes);
-        boolean addPaymentResult = vendor.addNewPayment(this, payment);
-
-        if (addPaymentResult) {
-            addPaymentToListOfPayments(vendorInfo, payment);
-        }
-        else {
-            //TODO: redo all steps: generate commit, make new payment, as the payment was corrupted
-        }
     }
 
     public void addPaymentToListOfPayments(VendorInfo vendorInfo, Payment payment) {
