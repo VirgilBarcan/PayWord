@@ -3,7 +3,7 @@ This is my Information Security project
 It models a PayWord protocol, as described in docs/RS96a.prepub.pdf.
 
 ##Security architecture
-For this project, the SHA-1 hash function will be used; SHA-1 "digests" messages and outputs 180 bits.
+For this project, the SHA-1 hash function will be used; SHA-1 "digests" messages and outputs 160 bits.
 The messages are signed using RSA digital signature.
 
 The identities of the Broker, User and Vendor are their email addresses, represented on 1024 bits;
