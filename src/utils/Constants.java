@@ -29,4 +29,10 @@ public class Constants {
         public static final int REDEEM = 1111111;
     }
 
+    public static class PaywordValue {
+        public static final int ONE = 1;
+        public static final int FIVE = 5;
+        public static final int TEN = 10;
+    }
+
 }

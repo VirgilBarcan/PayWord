@@ -186,7 +186,7 @@ public class UserClient {
                 paymentNo = 0;
 
                 //generate the new hash chain for this vendor
-                user.generateNewHashChain(vendorInfo);
+                user.generateNewHashChains(vendorInfo);
 
                 //compute the commit(V)
                 Commit commit = user.computeCommitment(vendorInfo);
@@ -212,7 +212,7 @@ public class UserClient {
             do {
                 //construct and send the payment to the vendor
                 //construct the Payment
-                Payment payment = user.constructPayment(vendorInfo, paymentNo);
+                Payment payment = user.constructPayment(vendorInfo, paymentNo, Constants.PaywordValue.ONE);
                 response = sendPayment(payment);
 
                 if (response == Constants.CommunicationProtocol.OK) {
@@ -282,7 +282,7 @@ public class UserClient {
     public static void main(String[] args) {
         Bank bank = Bank.getInstance();
 
-        //TODO: Get all this info from args or ask user via Console
+        //Get all this info from args or ask user via Console
         String userIdentity = "user@gmail.com";
         long accountNo = 1;
         long accountBalance = 1000;

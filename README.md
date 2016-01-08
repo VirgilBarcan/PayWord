@@ -32,7 +32,7 @@ The steps to be taken:
             D is the current date,
             I are additional info: length of the chain, etc.
         User sends the commit to the Vendor.
-    User sends the i-th payment of the day to the Vendor by sending the pair (ci, i).
+    User sends the i-th payment of the day to the Vendor by sending the pair (ci, i, value).
 ###3. Redeem:
     Considering (cl, l) the last payment pair, the Vendor send to the Broker a message containing: commit(U), cl, l.
 

@@ -6,7 +6,6 @@ import backend.Payment;
 import backend.Payword;
 import broker.Broker;
 import utils.*;
-import vendor.Vendor;
 import vendor.VendorInfo;
 
 import java.nio.ByteBuffer;
@@ -32,7 +31,9 @@ public class User {
 
     private int hashChainLength;
     private Map<VendorInfo, List<Payment>> paymentsDone;
-    private Map<VendorInfo, List<List<Payword>>> hashChains;
+    private Map<VendorInfo, List<List<Payword>>> hashChains1;
+    private Map<VendorInfo, List<List<Payword>>> hashChains5;
+    private Map<VendorInfo, List<List<Payword>>> hashChains10;
 
     public User() {
         broker = Broker.getInstance();
@@ -44,7 +45,9 @@ public class User {
 
         this.hashChainLength = 10000;
         this.paymentsDone = new HashMap<>();
-        this.hashChains = new HashMap<>();
+        this.hashChains1 = new HashMap<>();
+        this.hashChains5 = new HashMap<>();
+        this.hashChains10 = new HashMap<>();
     }
 
     public User(String identity) {
@@ -63,7 +66,9 @@ public class User {
 
         this.hashChainLength = 10000;
         this.paymentsDone = new HashMap<>();
-        this.hashChains = new HashMap<>();
+        this.hashChains1 = new HashMap<>();
+        this.hashChains5 = new HashMap<>();
+        this.hashChains10 = new HashMap<>();
     }
 
     private void initIdentity() {
@@ -177,8 +182,56 @@ public class User {
      * Generate a new hash chain for the Vendor, in order to make it possible to pay him
      * @param vendorInfo the Vendor
      */
-    public void generateNewHashChain(VendorInfo vendorInfo) {
-        System.out.println("Started generating hash chain");
+    public void generateNewHashChains(VendorInfo vendorInfo) {
+        System.out.println("Started generating hash chains");
+        List<Payword> currentHashChain1 = generateHashChain();
+        List<Payword> currentHashChain5 = generateHashChain();
+        List<Payword> currentHashChain10 = generateHashChain();
+
+        System.out.println("Finished generating hash chains");
+
+        //hash chain for the value 1
+        if (hashChains1.get(vendorInfo) != null) {
+            List<List<Payword>> vendorPreviousHashChains = hashChains1.get(vendorInfo);
+            vendorPreviousHashChains.add(currentHashChain1);
+            hashChains1.remove(vendorInfo);
+            hashChains1.put(vendorInfo, vendorPreviousHashChains);
+        }
+        else {
+            List<List<Payword>> vendorPreviousHashChains = new ArrayList<>();
+            vendorPreviousHashChains.add(currentHashChain1);
+            hashChains1.put(vendorInfo, vendorPreviousHashChains);
+        }
+
+        //hash chain for the value 5
+        if (hashChains5.get(vendorInfo) != null) {
+            List<List<Payword>> vendorPreviousHashChains = hashChains5.get(vendorInfo);
+            vendorPreviousHashChains.add(currentHashChain5);
+            hashChains5.remove(vendorInfo);
+            hashChains5.put(vendorInfo, vendorPreviousHashChains);
+        }
+        else {
+            List<List<Payword>> vendorPreviousHashChains = new ArrayList<>();
+            vendorPreviousHashChains.add(currentHashChain5);
+            hashChains5.put(vendorInfo, vendorPreviousHashChains);
+        }
+
+        //hash chain for the value 10
+        if (hashChains10.get(vendorInfo) != null) {
+            List<List<Payword>> vendorPreviousHashChains = hashChains10.get(vendorInfo);
+            vendorPreviousHashChains.add(currentHashChain10);
+            hashChains10.remove(vendorInfo);
+            hashChains10.put(vendorInfo, vendorPreviousHashChains);
+        }
+        else {
+            List<List<Payword>> vendorPreviousHashChains = new ArrayList<>();
+            vendorPreviousHashChains.add(currentHashChain10);
+            hashChains10.put(vendorInfo, vendorPreviousHashChains);
+        }
+
+    }
+
+    private List<Payword> generateHashChain() {
         List<Payword> currentHashChain = new ArrayList<>();
 
         byte[] cn = Crypto.getSecret(1024);
@@ -192,21 +245,7 @@ public class User {
 
             last = current;
         }
-
-        System.out.println("Finished generating hash chain");
-
-        if (hashChains.get(vendorInfo) != null) {
-            List<List<Payword>> vendorPreviousHashChains = hashChains.get(vendorInfo);
-            vendorPreviousHashChains.add(currentHashChain);
-            hashChains.remove(vendorInfo);
-            hashChains.put(vendorInfo, vendorPreviousHashChains);
-        }
-        else {
-            List<List<Payword>> vendorPreviousHashChains = new ArrayList<>();
-            vendorPreviousHashChains.add(currentHashChain);
-            hashChains.put(vendorInfo, vendorPreviousHashChains);
-        }
-
+        return currentHashChain;
     }
 
     /**
@@ -223,7 +262,7 @@ public class User {
     public Commit computeCommitment(VendorInfo vendorInfo) {
         int size = vendorInfo.getIdentity().length +
                 userCertificate.length +
-                20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
+                3 * 20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
         byte[] message = new byte[size];
 
         System.out.println("User.computeCommitment: size = " + size);
@@ -241,12 +280,28 @@ public class User {
             message[index] = this.userCertificate[i];
         }
 
-        //copy the root of the signedHash chain, c0
-        List<List<Payword>> allHashChains = hashChains.get(vendorInfo);
-        List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
-        byte[] c0 = lastHashChainComputed.get(this.hashChainLength - 1).getBytes();
-        for (int i = 0; i < c0.length; ++i, ++index) {
-            message[index] = c0[i];
+        //copy the root of the signedHash chain, c01
+        List<List<Payword>> allHashChains1 = hashChains1.get(vendorInfo);
+        List<Payword> lastHashChainComputed1 = allHashChains1.get(allHashChains1.size() - 1);
+        byte[] c01 = lastHashChainComputed1.get(this.hashChainLength - 1).getBytes();
+        for (int i = 0; i < c01.length; ++i, ++index) {
+            message[index] = c01[i];
+        }
+
+        //copy the root of the signedHash chain, c05
+        List<List<Payword>> allHashChains5 = hashChains5.get(vendorInfo);
+        List<Payword> lastHashChainComputed5 = allHashChains1.get(allHashChains5.size() - 1);
+        byte[] c05 = lastHashChainComputed5.get(this.hashChainLength - 1).getBytes();
+        for (int i = 0; i < c05.length; ++i, ++index) {
+            message[index] = c05[i];
+        }
+
+        //copy the root of the signedHash chain, c010
+        List<List<Payword>> allHashChains10 = hashChains10.get(vendorInfo);
+        List<Payword> lastHashChainComputed10 = allHashChains10.get(allHashChains10.size() - 1);
+        byte[] c010 = lastHashChainComputed10.get(this.hashChainLength - 1).getBytes();
+        for (int i = 0; i < c010.length; ++i, ++index) {
+            message[index] = c010[i];
         }
 
         //copy the current date
@@ -309,27 +364,79 @@ public class User {
         paymentsDone.put(vendorInfo, paymentList);
     }
 
-    public Payment constructPayment(VendorInfo vendorInfo, int paymentNo) {
-        byte[] bytes = new byte[24];
+    public Payment constructPayment(VendorInfo vendorInfo, int paymentNo, int paywordValue) {
+        byte[] bytes = new byte[28];
 
         System.out.println("User.constructPayment: paymentNo=" + paymentNo);
 
         int index = 0;
 
-        //copy the paymentNo-th payword
-        List<List<Payword>> allHashChains = hashChains.get(vendorInfo);
-        List<Payword> lastHashChainComputed = allHashChains.get(allHashChains.size() - 1);
-        byte[] ci = lastHashChainComputed.get(this.hashChainLength - paymentNo - 1).getBytes();
-        for (int i = 0; i < ci.length; ++i, ++index) {
-            bytes[index] = ci[i];
+        //copy the paymentNo-th payword from the corresponding hash chain
+        switch (paywordValue) {
+            case Constants.PaywordValue.FIVE:
+                System.out.println("User.constructPayment: Payword Value = ONE");
+                List<List<Payword>> allHashChains5 = hashChains5.get(vendorInfo);
+                List<Payword> lastHashChainComputed5 = allHashChains5.get(allHashChains5.size() - 1);
+                byte[] ci = lastHashChainComputed5.get(this.hashChainLength - paymentNo - 1).getBytes();
+                for (int i = 0; i < ci.length; ++i, ++index) {
+                    bytes[index] = ci[i];
+                }
+
+                System.out.println("User.constructPayment: " + Arrays.toString(ci));
+
+                //copy the bytes of paymentNo
+                byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
+                for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
+                    bytes[index] = paymentNoBytes[i];
+                }
+
+                break;
+
+            case Constants.PaywordValue.TEN:
+                System.out.println("User.constructPayment: Payword Value = ONE");
+                List<List<Payword>> allHashChains10 = hashChains10.get(vendorInfo);
+                List<Payword> lastHashChainComputed10 = allHashChains10.get(allHashChains10.size() - 1);
+                ci = lastHashChainComputed10.get(this.hashChainLength - paymentNo - 1).getBytes();
+                for (int i = 0; i < ci.length; ++i, ++index) {
+                    bytes[index] = ci[i];
+                }
+
+                System.out.println("User.constructPayment: " + Arrays.toString(ci));
+
+                //copy the bytes of paymentNo
+                paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
+                for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
+                    bytes[index] = paymentNoBytes[i];
+                }
+
+                break;
+
+            case Constants.PaywordValue.ONE:
+            default:
+                System.out.println("User.constructPayment: Payword Value = ONE");
+                List<List<Payword>> allHashChains1 = hashChains1.get(vendorInfo);
+                List<Payword> lastHashChainComputed1 = allHashChains1.get(allHashChains1.size() - 1);
+                ci = lastHashChainComputed1.get(this.hashChainLength - paymentNo - 1).getBytes();
+                for (int i = 0; i < ci.length; ++i, ++index) {
+                    bytes[index] = ci[i];
+                }
+
+                System.out.println("User.constructPayment: " + Arrays.toString(ci));
+
+                //copy the bytes of paymentNo
+                paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
+                for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
+                    bytes[index] = paymentNoBytes[i];
+                }
+
+                break;
+
         }
 
-        System.out.println("User.constructPayment: " + Arrays.toString(ci));
-
-        //copy the bytes of paymentNo
-        byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
-        for (int i = 0; i < paymentNoBytes.length; ++i, ++index) {
-            bytes[index] = paymentNoBytes[i];
+        //copy the bytes of paywordValue
+        byte[] paywordValueBytes = ByteBuffer.allocate(4).putInt(paywordValue).array();
+        for (int i = 0; i < paywordValueBytes.length; ++i, ++index) {
+            bytes[index] = paywordValueBytes[i];
         }
 
         //Send payment to Vendor

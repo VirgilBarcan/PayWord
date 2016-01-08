@@ -402,11 +402,11 @@ public class Broker {
         //check commit(U)
         //extract commit(U) from the message
         //get the unsigned part
-        int size = 892; //the no of bytes of the message without the signed hash
+        int size = 932; //the no of bytes of the message without the signed hash
         byte[] unsignedMessage = Arrays.copyOfRange(message, 0, size);
 
         //get the signed hash
-        byte[] signedHash = Arrays.copyOfRange(message, size, 1020);
+        byte[] signedHash = Arrays.copyOfRange(message, size, 1060);
 
         //get the vendor identity
         byte[] vendorIdentity = Arrays.copyOfRange(message, 0, 128);
@@ -442,11 +442,11 @@ public class Broker {
 
             //apply the hash function l times to see if the resulting c0 is equal with the given c0
             //get cl - the l-th payword
-            byte[] cl = Arrays.copyOfRange(message, 1020, 1040);
+            byte[] cl = Arrays.copyOfRange(message, 1060, 1080);
             System.out.println("Broker.redeem: cl=" + Arrays.toString(cl));
 
             //get l - the index of the last payment
-            int l = ByteBuffer.wrap(message, 1040, 4).getInt();
+            int l = ByteBuffer.wrap(message, 1080, 4).getInt();
             System.out.println("Broker.redeem: l=" + l);
 
             //apply the hash function l times

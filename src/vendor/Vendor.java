@@ -160,7 +160,7 @@ public class Vendor {
     public boolean addNewCommit(UserInfo userInfo, Commit commit) {
         //check U's signature on commit
         //get the unsigned part
-        int size = 892; //the no of bytes of the message without the signed hash
+        int size = 932; //the no of bytes of the message without the signed hash
         byte[] message = Arrays.copyOfRange(commit.getBytes(), 0, size);
 
         //get the signed hash
@@ -218,6 +218,8 @@ public class Vendor {
                 result = signature.verify(signedHash);
                 System.out.println("Vendor.addNewCommit: verify Broker signature on User certificate result: " + result);
                 if (result) {
+                    //TODO: Check if the certificate is not expired
+
                     userCommitments.put(userInfo, commit);
                 }
 

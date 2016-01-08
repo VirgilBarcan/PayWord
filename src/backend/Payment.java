@@ -39,6 +39,15 @@ public class Payment {
         return ByteBuffer.wrap(paywordNoBytes).getInt();
     }
 
+    public int getPaywordValue() {
+        byte[] paywordValue = new byte[4];
+
+        for (int i = 20; i < 24; ++i)
+            paywordValue[i - 20] = this.bytes[i];
+
+        return ByteBuffer.wrap(paywordValue).getInt();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

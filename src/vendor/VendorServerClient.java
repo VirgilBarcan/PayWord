@@ -177,7 +177,7 @@ public class VendorServerClient {
 
         long startTime = System.currentTimeMillis();
 
-        //TODO: Get all this info from args or ask user via Console
+        //Get all this info from args or ask user via Console
         String vendorIdentity = "vendor1@gmail.com";
         long accountNo = 1000;
         long accountBalance = 9999;
@@ -216,7 +216,7 @@ public class VendorServerClient {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                } while (System.currentTimeMillis() - startTime < 15000);
+                } while (System.currentTimeMillis() - startTime < 35000);
 
                 vendorServerClient.redeem();
                 vendorServerClient.endCommunicationWithBroker();
@@ -238,6 +238,7 @@ public class VendorServerClient {
         private int connectionID;
 
         private UserInfo userInfo;
+        private int lastPaymentValue;
 
         public ConnectionRunnable(Socket connection, int connectionID) {
             this.connection = connection;
@@ -358,9 +359,10 @@ public class VendorServerClient {
                 dataInputStream.read(paymentBytes);
                 Payment payment = new Payment(paymentBytes);
 
-                //Process the payment
-                System.out.println("ConnectionRunnable.handleMakePayment: userInfo=" + userInfo);
+                //TODO: Check if the new payment has a different value
+                //If it has, then redeem the current sum and start over with the new payword value
 
+                //Process the payment
                 //add the payment to the vendor
                 boolean result = vendor.addNewPayment(userInfo, payment);
 
@@ -369,6 +371,9 @@ public class VendorServerClient {
                     dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
                 } else {
                     dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
+
+                    //something went wrong, the payment was not accepted
+                    //TODO: some way to handle this situation has to be implemented
                 }
             } catch (IOException e) {
                 e.printStackTrace();

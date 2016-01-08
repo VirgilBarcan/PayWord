@@ -54,7 +54,7 @@ public class BrokerServer implements Runnable {
             while ((commandID = dataInputStream.readInt()) != Constants.CommunicationProtocol.END_COMMUNICATION) {
                 System.out.println("BrokerServer.run: commandID=" + commandID);
 
-                //TODO: Do here all things involving the Broker depending on what the client asked
+                //Do here all things involving the Broker depending on what the client asked
                 processCommand(commandID, dataInputStream, dataOutputStream);
             }
 
