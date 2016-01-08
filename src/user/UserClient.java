@@ -215,13 +215,18 @@ public class UserClient {
                 Payment payment = user.constructPayment(vendorInfo, paymentNo, Constants.PaywordValue.ONE);
                 response = sendPayment(payment);
 
+                //response = sendPayment(payment); //for testing purposes: test if the vendor reacts to fraud attempts
+
                 if (response == Constants.CommunicationProtocol.OK) {
                     user.addPaymentToListOfPayments(vendorInfo, payment);
                 }
 
-            }while(response == Constants.CommunicationProtocol.NOK);
+            }while(response == Constants.CommunicationProtocol.NOK && response != Constants.CommunicationProtocol.FRAUD);
 
-            System.out.println("UserClient.makePaymentToVendor: payment DONE");
+            if (response != Constants.CommunicationProtocol.FRAUD)
+                System.out.println("UserClient.makePaymentToVendor: payment DONE");
+            else
+                System.out.println("UserClient.makePaymentToVendor: FRAUD ATTEMPT");
 
         } catch (IOException e) {
             e.printStackTrace();

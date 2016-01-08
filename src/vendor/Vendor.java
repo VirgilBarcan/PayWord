@@ -236,7 +236,10 @@ public class Vendor {
         return result;
     }
 
-    public boolean addNewPayment(UserInfo userInfo, Payment payment) {
+    public int addNewPayment(UserInfo userInfo, Payment payment) {
+
+        System.out.println("Vendor.addNewPayment: paymentNo=" + payment.getPaywordNo());
+
         if (userPayments.get(userInfo) != null) {
             List<Payment> listOfPayments = userPayments.get(userInfo);
 
@@ -250,24 +253,24 @@ public class Vendor {
                 listOfPayments.add(payment);
                 userPayments.remove(userInfo);
                 userPayments.put(userInfo, listOfPayments);
+
+                return 1;
             }
             else {
                 System.out.println("Vendor.addNewPayment: not authentic payment! => don't add to the list of payments");
 
                 //TODO: do something to stop the service and force the user to redo all steps: generate commit and new payment
                 //TODO: redeem what the user paid so far ??
-                return false;
+                return 2;
             }
         }
         else {
             List<Payment> listOfPayments = new ArrayList<>();
             listOfPayments.add(payment);
             userPayments.put(userInfo, listOfPayments);
+
+            return 1;
         }
-
-        System.out.println("Vendor.addNewPayment: paymentNo=" + payment.getPaywordNo());
-
-        return true;
     }
 
     /**

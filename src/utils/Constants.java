@@ -21,6 +21,7 @@ public class Constants {
         public static final int END_COMMUNICATION = -1;
         public static final int OK = 1;
         public static final int NOK = 0;
+        public static final int FRAUD = 2;
         public static final int USER_REGISTER_TO_BROKER = 11;
         public static final int VENDOR_REGISTER_TO_BROKER = 111;
         public static final int GET_IDENTITY = 1111;

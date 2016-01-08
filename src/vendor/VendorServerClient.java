@@ -362,16 +362,19 @@ public class VendorServerClient {
 
                 //Process the payment
                 //add the payment to the vendor
-                boolean result = vendor.addNewPayment(userInfo, payment);
+                int result = vendor.addNewPayment(userInfo, payment);
 
                 //Proof of concept: just send the confirmation
-                if (result) {
-                    dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
-                } else {
-                    dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
-
-                    //something went wrong, the payment was not accepted
-                    //TODO: some way to handle this situation has to be implemented
+                switch (result) {
+                    case 0: //NOK
+                        dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
+                        break;
+                    case 1: //OK
+                        dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
+                        break;
+                    case 2: //FRAUD
+                        dataOutputStream.writeInt(Constants.CommunicationProtocol.FRAUD);
+                        break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
