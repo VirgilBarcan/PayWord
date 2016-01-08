@@ -196,8 +196,6 @@ public class VendorServerClient {
         vendor.setAccount(vendorAccount);
 
 
-        System.out.println("VendorServerClient.main: vendor accountBalance=" + Bank.getInstance().getAccountBalance(vendor.getAccount().getAccountNumber()));
-
         VendorServerClient vendorServerClient = new VendorServerClient(port);
         vendorServerClient.setVendor(vendor);
 

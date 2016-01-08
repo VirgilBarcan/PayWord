@@ -113,7 +113,7 @@ public class Vendor {
 
         int index = 0;
 
-        System.out.println("Vendor.getVendorInfo: lengthOfIdentity=" + identity.length);
+        //System.out.println("Vendor.getVendorInfo: lengthOfIdentity=" + identity.length);
         //copy identity length
         byte[] lengthOfIdentity = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(identity.length).array();
         for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
@@ -128,20 +128,20 @@ public class Vendor {
         byte[] publicKeyEncoded = publicKey.getEncoded();
 
 
-        System.out.println("Vendor.getVendorInfo: publicKeyLength=" + publicKeyEncoded.length);
+        //System.out.println("Vendor.getVendorInfo: publicKeyLength=" + publicKeyEncoded.length);
         //copy publicKey length
         byte[] lengthOfPublicKey = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(publicKeyEncoded.length).array();
         for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
             vendorInfo[index] = lengthOfPublicKey[i];
         }
 
-        System.out.println("Vendor.getVendorInfo: vendorPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
+        //System.out.println("Vendor.getVendorInfo: vendorPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
         //copy publicKey
         for (int i = 0; i < publicKeyEncoded.length; ++i, ++index) {
             vendorInfo[index] = publicKeyEncoded[i];
         }
 
-        System.out.println("Vendor.getVendorInfo: accountNumber=" + getAccount().getAccountNumber());
+        //System.out.println("Vendor.getVendorInfo: accountNumber=" + getAccount().getAccountNumber());
         //copy account number
         byte[] accountNumberBytes = ByteBuffer.allocate(Constants.LONG_NO_OF_BYTES).putLong(getAccount().getAccountNumber()).array();
         for (int i = 0; i < Constants.LONG_NO_OF_BYTES; ++i, ++index) {
@@ -205,7 +205,7 @@ public class Vendor {
                     keyFactory = KeyFactory.getInstance("RSA");
                     brokerPublicKey = keyFactory.generatePublic(keySpec);
 
-                    System.out.println("Vendor.addNewCommit: brokerPublicKey=" + ((RSAPublicKey) brokerPublicKey).getModulus().toString());
+                    //System.out.println("Vendor.addNewCommit: brokerPublicKey=" + ((RSAPublicKey) brokerPublicKey).getModulus().toString());
                 } catch (NoSuchAlgorithmException e) {
                     e.printStackTrace();
                 } catch (InvalidKeySpecException e) {

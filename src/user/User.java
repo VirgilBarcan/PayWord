@@ -124,7 +124,7 @@ public class User {
 
         int index = 0;
 
-        System.out.println("User.getVendorInfo: lengthOfIdentity=" + identity.length);
+        //System.out.println("User.getVendorInfo: lengthOfIdentity=" + identity.length);
         //copy identity length
         byte[] lengthOfIdentity = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(identity.length).array();
         for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
@@ -139,27 +139,27 @@ public class User {
         byte[] publicKeyEncoded = publicKey.getEncoded();
 
 
-        System.out.println("User.getVendorInfo: publicKeyLength=" + publicKeyEncoded.length);
+        //System.out.println("User.getVendorInfo: publicKeyLength=" + publicKeyEncoded.length);
         //copy publicKey length
         byte[] lengthOfPublicKey = ByteBuffer.allocate(Constants.INT_NO_OF_BYTES).putInt(publicKeyEncoded.length).array();
         for (int i = 0; i < Constants.INT_NO_OF_BYTES; ++i, ++index) {
             personalInfo[index] = lengthOfPublicKey[i];
         }
 
-        System.out.println("User.getVendorInfo: userPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
+        //System.out.println("User.getVendorInfo: userPublicKey=" + ((RSAPublicKey) publicKey).getModulus().toString());
         //copy publicKey
         for (int i = 0; i < publicKeyEncoded.length; ++i, ++index) {
             personalInfo[index] = publicKeyEncoded[i];
         }
 
-        System.out.println("User.getVendorInfo: accountNumber=" + getAccount().getAccountNumber());
+        //System.out.println("User.getVendorInfo: accountNumber=" + getAccount().getAccountNumber());
         //copy account number
         byte[] accountNumberBytes = ByteBuffer.allocate(Constants.LONG_NO_OF_BYTES).putLong(getAccount().getAccountNumber()).array();
         for (int i = 0; i < Constants.LONG_NO_OF_BYTES; ++i, ++index) {
             personalInfo[index] = accountNumberBytes[i];
         }
 
-        System.out.println("User.getVendorInfo: creditLimit=" + creditLimit);
+        //System.out.println("User.getVendorInfo: creditLimit=" + creditLimit);
         //copy credit limit
         byte[] creditLimitBytes = ByteBuffer.allocate(Constants.LONG_NO_OF_BYTES).putLong(creditLimit).array();
         for (int i = 0; i < Constants.LONG_NO_OF_BYTES; ++i, ++index) {
@@ -265,7 +265,7 @@ public class User {
                 3 * 20 + Constants.LONG_NO_OF_BYTES + Constants.INT_NO_OF_BYTES;
         byte[] message = new byte[size];
 
-        System.out.println("User.computeCommitment: size = " + size);
+        //System.out.println("User.computeCommitment: size = " + size);
 
         int index = 0;
 
@@ -374,7 +374,7 @@ public class User {
         //copy the paymentNo-th payword from the corresponding hash chain
         switch (paywordValue) {
             case Constants.PaywordValue.FIVE:
-                System.out.println("User.constructPayment: Payword Value = ONE");
+                System.out.println("User.constructPayment: Payword Value = FIVE");
                 List<List<Payword>> allHashChains5 = hashChains5.get(vendorInfo);
                 List<Payword> lastHashChainComputed5 = allHashChains5.get(allHashChains5.size() - 1);
                 byte[] ci = lastHashChainComputed5.get(this.hashChainLength - paymentNo - 1).getBytes();
@@ -382,7 +382,7 @@ public class User {
                     bytes[index] = ci[i];
                 }
 
-                System.out.println("User.constructPayment: " + Arrays.toString(ci));
+                //System.out.println("User.constructPayment: " + Arrays.toString(ci));
 
                 //copy the bytes of paymentNo
                 byte[] paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
@@ -393,7 +393,7 @@ public class User {
                 break;
 
             case Constants.PaywordValue.TEN:
-                System.out.println("User.constructPayment: Payword Value = ONE");
+                System.out.println("User.constructPayment: Payword Value = TEN");
                 List<List<Payword>> allHashChains10 = hashChains10.get(vendorInfo);
                 List<Payword> lastHashChainComputed10 = allHashChains10.get(allHashChains10.size() - 1);
                 ci = lastHashChainComputed10.get(this.hashChainLength - paymentNo - 1).getBytes();
@@ -401,7 +401,7 @@ public class User {
                     bytes[index] = ci[i];
                 }
 
-                System.out.println("User.constructPayment: " + Arrays.toString(ci));
+                //System.out.println("User.constructPayment: " + Arrays.toString(ci));
 
                 //copy the bytes of paymentNo
                 paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();
@@ -421,7 +421,7 @@ public class User {
                     bytes[index] = ci[i];
                 }
 
-                System.out.println("User.constructPayment: " + Arrays.toString(ci));
+                //System.out.println("User.constructPayment: " + Arrays.toString(ci));
 
                 //copy the bytes of paymentNo
                 paymentNoBytes = ByteBuffer.allocate(4).putInt(paymentNo).array();

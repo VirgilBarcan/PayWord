@@ -190,11 +190,11 @@ public class UserClient {
 
                 //compute the commit(V)
                 Commit commit = user.computeCommitment(vendorInfo);
-                System.out.println("UserClient.makePaymentToVendor: commitBytes=" + Arrays.toString(commit.getBytes()));
+                //System.out.println("UserClient.makePaymentToVendor: commitBytes=" + Arrays.toString(commit.getBytes()));
 
                 //test
                 UserInfo userInfo = commit.getUserInfoFromCommit();
-                System.out.println("UserClient.makePaymentToVendor: userInfo=" + userInfo);
+                //System.out.println("UserClient.makePaymentToVendor: userInfo=" + userInfo);
 
                 //send the commit to the vendor
                 boolean sendCommitResponse;
@@ -231,6 +231,15 @@ public class UserClient {
         return true;
     }
 
+    public boolean payValue(long value) {
+        for (long i = 0; i < value; ++i) {
+            if (this.makePaymentToVendor() == false)
+                return false;
+        }
+
+        return true;
+    }
+
     private boolean sendCommit(Commit commit) throws IOException {
         System.out.println("UserClient.sendCommit");
 
@@ -239,11 +248,11 @@ public class UserClient {
 
         //send commit length
         this.vendorDataOutputStream.writeInt(commit.getBytes().length);
-        System.out.println("UserClient.sendCommit: commitLength=" + commit.getBytes().length);
+        //System.out.println("UserClient.sendCommit: commitLength=" + commit.getBytes().length);
 
         //send commit bytes
         this.vendorDataOutputStream.write(commit.getBytes());
-        System.out.println("UserClient.sendCommit: commitBytes=" + Arrays.toString(commit.getBytes()));
+        //System.out.println("UserClient.sendCommit: commitBytes=" + Arrays.toString(commit.getBytes()));
 
         //wait for confirmation
         int response = this.vendorDataInputStream.readInt();
@@ -269,6 +278,7 @@ public class UserClient {
 
         //wait for confirmation
         int response = this.vendorDataInputStream.readInt();
+        System.out.println("UserClient.sendPayment: response=" + response);
 
         return response;
     }
@@ -316,12 +326,7 @@ public class UserClient {
         int vendorPort = 2001;
         userClient.connectToVendor(Constants.LOCALHOST, vendorPort);
         userClient.getVendorIdentity();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
-        userClient.makePaymentToVendor();
+        userClient.payValue(5);
         userClient.endCommunicationWithVendor();
 
         //TODO: If the user wants to make a new payment the same day, the Vendor should be able to handle it

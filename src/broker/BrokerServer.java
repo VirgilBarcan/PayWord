@@ -108,18 +108,18 @@ public class BrokerServer implements Runnable {
             boolean resultOfRegister = broker.registerNewUser(userPersonalInfo);
 
             if (resultOfRegister) {
-                System.out.println("BrokerServer.userRegisterToBroker: send OK");
+                System.out.println("BrokerServer.userRegisterToBroker: register OK");
                 dataOutputStream.writeInt(Constants.CommunicationProtocol.OK);
 
                 byte[] userCertificate = broker.getUserCertificate(broker.getUserIdentityFromPersonalInfo(userPersonalInfo));
-                System.out.println("BrokerServer.userRegisterToBroker: userCertificate=" + Arrays.toString(userCertificate));
+                //System.out.println("BrokerServer.userRegisterToBroker: userCertificate=" + Arrays.toString(userCertificate));
                 //send the user certificate length
                 dataOutputStream.writeInt(userCertificate.length);
 
                 //send the user certificate
                 dataOutputStream.write(userCertificate);
             } else {
-                System.out.println("BrokerServer.userRegisterToBroker: send NOK");
+                System.out.println("BrokerServer.userRegisterToBroker: register NOK");
                 dataOutputStream.writeInt(Constants.CommunicationProtocol.NOK);
             }
 
@@ -171,7 +171,7 @@ public class BrokerServer implements Runnable {
             dataInputStream.read(redeemMessageBytes);
 
             //Handle the redeem
-            System.out.println("BrokerServer.redeem: redeemMessage=" + Arrays.toString(redeemMessageBytes));
+            //System.out.println("BrokerServer.redeem: redeemMessage=" + Arrays.toString(redeemMessageBytes));
 
             boolean resultOfRedeem = broker.redeem(redeemMessageBytes);
 
